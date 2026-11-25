@@ -1423,20 +1423,226 @@ class InterfazGraficaPERA:
         except Exception:
             messagebox.showwarning("Seleccion", "Seleccione un producto.")
 
-    # ---- DASHBOARD Y MAPA FOLIUM (IMPLEMENTACION COMPLETA EN SUBFASE 4C) ----
+    # ---- DASHBOARD ESTADISTICO (MATPLOTLIB) Y MAPA INTERACTIVO (FOLIUM) ----
+    @staticmethod
+    def construir_figura_dashboard(sistema: SistemaPERA) -> "Figure":
+        fig = Figure(figsize=(10.8, 5.2), dpi=100)
+        fig.patch.set_facecolor("#FFFFFF")
+
+        st = sistema.calcular_estadisticas()
+        rutas_activas = [r for r in sistema.rutas.values() if r.activa]
+
+        # 1. Histograma de Distancias (km)
+        ax1 = fig.add_subplot(2, 2, 1)
+        dists = [r.distancia_km for r in rutas_activas]
+        if dists:
+            ax1.hist(dists, bins=10, color="#0284C7", edgecolor="#FFFFFF", alpha=0.9)
+            ax1.axvline(st.dist_km.media, color="#DC2626", linestyle="--", linewidth=1.4,
+                        label=f"Media: {st.dist_km.media:.1f} km")
+            ax1.legend(fontsize=8)
+        ax1.set_title("Histograma: Distancias por Corredor (km)", fontsize=9.5, fontweight="bold", color="#0F172A")
+        ax1.set_xlabel("Distancia (km)", fontsize=8)
+        ax1.set_ylabel("Frecuencia", fontsize=8)
+        ax1.tick_params(labelsize=8)
+        ax1.grid(axis="y", linestyle=":", alpha=0.5)
+
+        # 2. Histograma de Costos en Peajes (miles de COP)
+        ax2 = fig.add_subplot(2, 2, 2)
+        peajes_k = [r.costo_peajes_cop / 1000.0 for r in rutas_activas]
+        if peajes_k:
+            ax2.hist(peajes_k, bins=10, color="#D97706", edgecolor="#FFFFFF", alpha=0.9)
+            ax2.axvline(st.peajes_cop.media / 1000.0, color="#0F4C81", linestyle="--", linewidth=1.4,
+                        label=f"Media: ${st.peajes_cop.media / 1000.0:.1f}k")
+            ax2.legend(fontsize=8)
+        ax2.set_title("Histograma: Costos en Peajes (miles COP)", fontsize=9.5, fontweight="bold", color="#0F172A")
+        ax2.set_xlabel("Costo en Peajes (miles de COP)", fontsize=8)
+        ax2.set_ylabel("Frecuencia", fontsize=8)
+        ax2.tick_params(labelsize=8)
+        ax2.grid(axis="y", linestyle=":", alpha=0.5)
+
+        # 3. Diagrama de Barras: Top 8 Capitales por Conectividad (Grado)
+        ax3 = fig.add_subplot(2, 2, 3)
+        top_hubs = [par for par in st.top_hubs[:8] if par[1] > 0]
+        if top_hubs:
+            nombres = [sistema.nombre_ciudad(cid) for cid, _ in reversed(top_hubs)]
+            grados = [g for _, g in reversed(top_hubs)]
+            ax3.barh(nombres, grados, color="#15803D", alpha=0.9)
+            for idx, val in enumerate(grados):
+                ax3.text(val + 0.12, idx, str(val), va="center", fontsize=8, fontweight="bold")
+        ax3.set_title("Barras: Top 8 Capitales por Conectividad (Grado)", fontsize=9.5, fontweight="bold", color="#0F172A")
+        ax3.set_xlabel("Corredores Directos", fontsize=8)
+        ax3.tick_params(labelsize=8)
+        ax3.grid(axis="x", linestyle=":", alpha=0.5)
+
+        # 4. Diagrama de Barras Agrupadas: Combustible vs Peajes (Top 6 corredores)
+        ax4 = fig.add_subplot(2, 2, 4)
+        top_corr = sorted(
+            rutas_activas,
+            key=lambda r: r.costo_combustible_cop + r.costo_peajes_cop,
+            reverse=True,
+        )[:6]
+        if top_corr:
+            etqs = [
+                f"{sistema.nombre_ciudad(r.id_origen)[:6]}-{sistema.nombre_ciudad(r.id_destino)[:6]}"
+                for r in top_corr
+            ]
+            comb_k = [r.costo_combustible_cop / 1000.0 for r in top_corr]
+            peaj_k = [r.costo_peajes_cop / 1000.0 for r in top_corr]
+            pos = list(range(len(etqs)))
+            ancho = 0.36
+            ax4.bar([p - ancho / 2 for p in pos], comb_k, width=ancho, label="Combustible", color="#0F4C81")
+            ax4.bar([p + ancho / 2 for p in pos], peaj_k, width=ancho, label="Peajes", color="#DC2626")
+            ax4.set_xticks(pos)
+            ax4.set_xticklabels(etqs, rotation=18, ha="right", fontsize=7.5)
+            ax4.legend(fontsize=8)
+        ax4.set_title("Barras: Combustible vs Peajes (Top 6 Corredores)", fontsize=9.5, fontweight="bold", color="#0F172A")
+        ax4.set_ylabel("Miles de COP", fontsize=8)
+        ax4.tick_params(axis="y", labelsize=8)
+        ax4.grid(axis="y", linestyle=":", alpha=0.5)
+
+        fig.tight_layout(pad=1.6)
+        return fig
+
+    @staticmethod
+    def generar_mapa_folium(
+        sistema: SistemaPERA,
+        ultima_ruta: Optional[ResultadoRuta],
+        ruta_html: Path,
+    ) -> Path:
+        mapa = folium.Map(location=[4.5709, -74.2973], zoom_start=6, tiles="OpenStreetMap")
+
+        rutas_destacadas = set(ultima_ruta.rutas_usadas) if (ultima_ruta and ultima_ruta.encontrada) else set()
+
+        # Dibujar corredores viales
+        for r in sistema.rutas.values():
+            c1 = sistema.ciudades.get(r.id_origen)
+            c2 = sistema.ciudades.get(r.id_destino)
+            if not c1 or not c2:
+                continue
+            es_optima = r.id_ruta in rutas_destacadas
+            if es_optima:
+                color, grosor, opacidad, dash = "#DC2626", 6, 0.95, None
+            elif not r.activa:
+                color, grosor, opacidad, dash = "#94A3B8", 2, 0.6, "6, 6"
+            else:
+                color, grosor, opacidad, dash = "#1D4ED8", 2.5, 0.65, None
+
+            popup_txt = (
+                f"<b>{c1.nombre} &harr; {c2.nombre}</b><br>"
+                f"Distancia: {r.distancia_km:.1f} km<br>"
+                f"Tiempo: {formato_horas(r.tiempo_horas)}<br>"
+                f"Combustible: {formato_cop(r.costo_combustible_cop)}<br>"
+                f"Peajes ({r.cantidad_peajes}): {formato_cop(r.costo_peajes_cop)}<br>"
+                f"Categoria: {r.categoria_via} | Estado: {'ACTIVA' if r.activa else 'CERRADA'}"
+            )
+            kwargs_linea = dict(
+                locations=[(c1.latitud, c1.longitud), (c2.latitud, c2.longitud)],
+                color=color,
+                weight=grosor,
+                opacity=opacidad,
+                popup=folium.Popup(popup_txt, max_width=260),
+                tooltip=f"{c1.nombre} - {c2.nombre} ({r.distancia_km:.0f} km)",
+            )
+            if dash:
+                kwargs_linea["dash_array"] = dash
+            folium.PolyLine(**kwargs_linea).add_to(mapa)
+
+        # Dibujar marcadores de las 32 capitales
+        camino_set = set(ultima_ruta.camino_ciudades) if (ultima_ruta and ultima_ruta.encontrada) else set()
+        for cid, c in sistema.ciudades.items():
+            grado = sistema.grafo_distancia.grado(cid)
+            if cid in camino_set:
+                color_ic = "red"
+            elif not c.activa or grado == 0:
+                color_ic = "gray"
+            else:
+                color_ic = "green"
+            popup_c = (
+                f"<b>{c.nombre}</b> ({c.departamento})<br>"
+                f"ID: {cid} | Grado vial: {grado}<br>"
+                f"Estado: {'ACTIVA' if c.activa else 'DESACTIVADA'}"
+            )
+            folium.CircleMarker(
+                location=[c.latitud, c.longitud],
+                radius=7 if cid in camino_set else 5,
+                color="#0F172A",
+                weight=1.2,
+                fill=True,
+                fill_color=color_ic,
+                fill_opacity=0.9,
+                popup=folium.Popup(popup_c, max_width=230),
+                tooltip=f"{c.nombre} (Grado: {grado})",
+            ).add_to(mapa)
+
+        # Leyenda flotante con resumen de la ruta optima
+        resumen_html = "Sin ruta seleccionada (calcule una ruta en PERA para resaltarla)."
+        if ultima_ruta and ultima_ruta.encontrada:
+            seq = " &rarr; ".join(sistema.nombre_ciudad(c) for c in ultima_ruta.camino_ciudades)
+            resumen_html = (
+                f"<b>{ultima_ruta.criterio}</b><br>"
+                f"{seq}<br>"
+                f"Dist: <b>{ultima_ruta.distancia_total_km:.1f} km</b> | "
+                f"Tiempo: <b>{formato_horas(ultima_ruta.tiempo_total_horas)}</b><br>"
+                f"Combustible: <b>{formato_cop(ultima_ruta.combustible_total_cop)}</b> | "
+                f"Peajes ({ultima_ruta.total_peajes}): <b>{formato_cop(ultima_ruta.peajes_total_cop)}</b><br>"
+                f"Total viaje: <b>{formato_cop(ultima_ruta.costo_total_cop)}</b>"
+            )
+        leyenda = f"""
+        <div style="position:fixed; bottom:24px; left:24px; z-index:9999; background:white;
+                    padding:10px 14px; border:2px solid #0F4C81; border-radius:6px;
+                    font-family:Arial,sans-serif; font-size:12px; max-width:390px;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+            <div style="font-weight:bold; color:#0F4C81; margin-bottom:4px;">
+                PERA Colombia - Red Vial Nacional (32 Capitales)
+            </div>
+            {resumen_html}
+        </div>
+        """
+        mapa.get_root().html.add_child(folium.Element(leyenda))
+        mapa.save(str(ruta_html))
+        return ruta_html
+
     def _renderizar_dashboard(self) -> None:
         st = self.sistema.calcular_estadisticas()
         self.var_resumen_dash.set(
             f"Capitales: {st.ciudades_activas}/{st.total_ciudades} (Aisladas: {st.ciudades_aisladas})  |  "
             f"Corredores activos: {st.rutas_activas}  |  Media Dist: {st.dist_km.media:.1f} km  |  "
-            f"Media Peajes: {formato_cop(st.peajes_cop.media)}"
+            f"Mediana Peajes: {formato_cop(st.peajes_cop.mediana)}  |  Desv.Est Dist: {st.dist_km.desv_estandar:.1f} km"
         )
+
+        for widget in self.frame_graficas.winfo_children():
+            widget.destroy()
+
+        if not MATPLOTLIB_DISPONIBLE:
+            tk.Label(
+                self.frame_graficas,
+                text="Para visualizar el Dashboard grafico instale matplotlib:\n\npip install matplotlib",
+                bg="#FFFFFF",
+                fg="#B91C1C",
+                font=("Segoe UI", 11, "bold"),
+            ).pack(expand=True)
+            return
+
+        fig = self.construir_figura_dashboard(self.sistema)
+        canvas = FigureCanvasTkAgg(fig, master=self.frame_graficas)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self._canvas_dashboard = canvas
 
     def _accion_abrir_mapa_folium(self) -> None:
         if not FOLIUM_DISPONIBLE:
-            messagebox.showwarning("Folium no instalado", "Instale folium con: pip install folium")
+            messagebox.showwarning(
+                "Folium no instalado",
+                "Instale folium para abrir el mapa interactivo de Colombia:\n\npip install folium",
+            )
             return
-        self.var_estado.set("Modulo de mapa listo.")
+        if not self.sistema.ciudades:
+            messagebox.showinfo("Sin datos", "Cargue datos o ingrese capitales antes de generar el mapa.")
+            return
+        ruta_html = Path(__file__).resolve().parent / "mapa_pera_colombia.html"
+        self.generar_mapa_folium(self.sistema, self.ultima_ruta, ruta_html)
+        webbrowser.open(ruta_html.as_uri())
+        self.var_estado.set(f"Mapa interactivo generado y abierto: {ruta_html.name}")
 
 
 def main() -> None:
