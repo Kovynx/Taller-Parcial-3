@@ -2,7 +2,7 @@
 tipo: moc-proyecto
 proyecto: Parcial 3 (PERA - Grafos Colombia)
 requerimiento: "[[Parcial-3-PERA-Grafos]]"
-estado: pendiente
+estado: en-progreso
 ---
 
 # MOC — Parcial 3 (Programa Estadístico de Rutas de Automóviles - PERA)

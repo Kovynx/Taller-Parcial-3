@@ -798,22 +798,637 @@ namespace PersistenciaPERA {
 
 } // namespace PersistenciaPERA
 
+// ============================================================================
+// CAPA 4: INTERFAZ DE CONSOLA INTERACTIVA (CRUD, DIJKSTRA Y RESUMEN)
+// ============================================================================
+class InterfazPERA {
+private:
+    SistemaPERA& sistema;
+    const std::string archivoDatos = "datos_pera.txt";
+
+    void mostrarEncabezado(const std::string& subtitulo) const {
+        Consola::limpiarPantalla();
+        std::cout << "+============================================================================================================+\n";
+        std::cout << "|   MINISTERIO DE TRANSPORTE DE COLOMBIA - PROGRAMA ESTADISTICO DE RUTAS DE AUTOMOVILES (PERA | KM-DV-ST)   |\n";
+        std::cout << "+============================================================================================================+\n";
+        std::cout << "  " << subtitulo << "\n";
+        std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+    }
+
+    void listarCiudadesCompacto() const {
+        const auto& ciudades = sistema.obtenerCiudades();
+        if (ciudades.empty()) {
+            std::cout << "  (No hay ciudades registradas)\n";
+            return;
+        }
+        int col = 0;
+        for (const auto& par : ciudades) {
+            const Ciudad& c = par.second;
+            std::ostringstream celda;
+            celda << std::setw(2) << c.id << ") " << c.nombre << (c.activa ? "" : " [INACTIVA]");
+            std::cout << "  " << std::left << std::setw(34) << celda.str();
+            if (++col % 3 == 0) std::cout << "\n";
+        }
+        if (col % 3 != 0) std::cout << "\n";
+    }
+
+    void imprimirDetalleRuta(const ResultadoRuta& res) const {
+        std::cout << "\n+------------------------------------------------------------------------------------------------------------+\n";
+        std::cout << "| CRITERIO: " << std::left << std::setw(96) << res.criterio << " |\n";
+        std::cout << "+------------------------------------------------------------------------------------------------------------+\n";
+        if (!res.encontrada) {
+            std::cout << "  [AVISO] " << res.mensaje << "\n";
+            return;
+        }
+        std::cout << "  RECORRIDO : ";
+        for (std::size_t i = 0; i < res.caminoCiudades.size(); ++i) {
+            if (i > 0) std::cout << " -> ";
+            std::cout << sistema.nombreCiudad(res.caminoCiudades[i]);
+        }
+        std::cout << "\n\n";
+        std::cout << "  1. DISTANCIA TOTAL   : " << std::fixed << std::setprecision(1) << res.distanciaTotalKm << " km\n";
+        std::cout << "  2. TIEMPO ESTIMADO   : " << Consola::formatoHoras(res.tiempoTotalHoras) << "\n";
+        std::cout << "  3. COSTO COMBUSTIBLE : " << Consola::formatoCOP(res.combustibleTotalCOP) << "\n";
+        std::cout << "  4. COSTO EN PEAJES   : " << Consola::formatoCOP(res.peajesTotalCOP)
+                  << " (" << res.totalPeajes << " estaciones)\n";
+        std::cout << "  => COSTO TOTAL VIAJE : " << Consola::formatoCOP(res.costoTotalCOP) << "\n";
+
+        if (!res.rutasUsadas.empty()) {
+            std::cout << "\n  Desglose por tramo vial:\n";
+            std::cout << "  " << std::left << std::setw(6) << "ID"
+                      << std::setw(36) << "CORREDOR"
+                      << std::setw(10) << "DIST(km)"
+                      << std::setw(10) << "TIEMPO"
+                      << std::setw(18) << "COMBUSTIBLE"
+                      << std::setw(18) << "PEAJES"
+                      << "CATEGORIA\n";
+            std::cout << "  ----------------------------------------------------------------------------------------------------------\n";
+            const auto& mapaRutas = sistema.obtenerRutas();
+            for (std::size_t i = 0; i < res.rutasUsadas.size(); ++i) {
+                const RutaTramo& t = mapaRutas.at(res.rutasUsadas[i]);
+                std::string corredor = sistema.nombreCiudad(res.caminoCiudades[i]) + " -> " +
+                                       sistema.nombreCiudad(res.caminoCiudades[i + 1]);
+                std::cout << "  " << std::left << std::setw(6) << t.idRuta
+                          << std::setw(36) << corredor
+                          << std::setw(10) << std::fixed << std::setprecision(1) << t.distanciaKm
+                          << std::setw(10) << Consola::formatoHoras(t.tiempoHoras)
+                          << std::setw(18) << Consola::formatoCOP(t.costoCombustibleCOP)
+                          << std::setw(18) << Consola::formatoCOP(t.costoPeajesCOP)
+                          << t.categoriaVia << "\n";
+            }
+        }
+    }
+
+    void menuCalcularRuta() const {
+        mostrarEncabezado("CALCULO DE COSTOS ENTRE DOS CIUDADES (TIEMPO, DISTANCIA, COMBUSTIBLE Y PEAJES)");
+        listarCiudadesCompacto();
+        std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+
+        int idOrig = 0, idDest = 0, criterio = 0;
+        if (!Consola::leerEntero("ID ciudad de ORIGEN : ", idOrig) ||
+            !Consola::leerEntero("ID ciudad de DESTINO: ", idDest)) {
+            std::cout << "Entrada invalida.\n";
+            Consola::pausar();
+            return;
+        }
+
+        std::cout << "\nCriterio de optimizacion sobre los 3 grafos:\n";
+        std::cout << "  1) Menor Distancia (Grafo 1 - km)\n";
+        std::cout << "  2) Menor Combustible (Grafo 2 - COP)\n";
+        std::cout << "  3) Menor Costo en Peajes (Grafo 3 - COP)\n";
+        std::cout << "  4) Menor Costo Total (Combustible + Peajes)\n";
+        std::cout << "  5) Comparar los 3 Grafos + Costo Total lado a lado\n";
+        if (!Consola::leerEntero("Seleccione criterio [1-5]: ", criterio) || criterio < 1 || criterio > 5) {
+            std::cout << "Criterio fuera de rango.\n";
+            Consola::pausar();
+            return;
+        }
+
+        if (criterio == 5) {
+            std::cout << "\n" << std::left << std::setw(42) << "CRITERIO"
+                      << std::setw(11) << "DIST(km)"
+                      << std::setw(10) << "TIEMPO"
+                      << std::setw(17) << "COMBUSTIBLE"
+                      << std::setw(17) << "PEAJES"
+                      << "TOTAL\n";
+            std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+            for (int c = 1; c <= 4; ++c) {
+                ResultadoRuta r = sistema.calcularRutaOptima(idOrig, idDest, c);
+                if (!r.encontrada) {
+                    std::cout << "  " << r.mensaje << "\n";
+                    break;
+                }
+                std::cout << std::left << std::setw(42) << r.criterio
+                          << std::setw(11) << std::fixed << std::setprecision(1) << r.distanciaTotalKm
+                          << std::setw(10) << Consola::formatoHoras(r.tiempoTotalHoras)
+                          << std::setw(17) << Consola::formatoCOP(r.combustibleTotalCOP)
+                          << std::setw(17) << Consola::formatoCOP(r.peajesTotalCOP)
+                          << Consola::formatoCOP(r.costoTotalCOP) << "\n";
+            }
+            ResultadoRuta detalle = sistema.calcularRutaOptima(idOrig, idDest, 4);
+            imprimirDetalleRuta(detalle);
+        } else {
+            ResultadoRuta r = sistema.calcularRutaOptima(idOrig, idDest, criterio);
+            imprimirDetalleRuta(r);
+        }
+        Consola::pausar();
+    }
+
+    void menuGestionCiudades() {
+        bool volver = false;
+        while (!volver) {
+            mostrarEncabezado("GESTION DE CIUDADES / CAPITALES (VERTICES DE LOS 3 GRAFOS)");
+            std::cout << std::left << std::setw(6) << "ID" << std::setw(24) << "CAPITAL"
+                      << std::setw(26) << "DEPARTAMENTO" << std::setw(11) << "LATITUD"
+                      << std::setw(11) << "LONGITUD" << std::setw(8) << "GRADO" << "ESTADO\n";
+            std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+            for (const auto& par : sistema.obtenerCiudades()) {
+                const Ciudad& c = par.second;
+                std::cout << std::left << std::setw(6) << c.id
+                          << std::setw(24) << c.nombre
+                          << std::setw(26) << c.departamento
+                          << std::setw(11) << std::fixed << std::setprecision(4) << c.latitud
+                          << std::setw(11) << c.longitud
+                          << std::setw(8) << sistema.obtenerGrafoDistancia().grado(c.id)
+                          << (c.activa ? "ACTIVA" : "DESACTIVADA") << "\n";
+            }
+            std::cout << "\n  1) Ingresar ciudad   2) Modificar ciudad   3) Desactivar/Reactivar   4) Eliminar ciudad   0) Volver\n";
+            std::string op = Consola::leerLinea("Opcion: ");
+
+            if (op == "1") {
+                Ciudad c;
+                c.id = sistema.siguienteIdCiudad();
+                c.nombre = Consola::leerLinea("Nombre de la capital: ");
+                c.departamento = Consola::leerLinea("Departamento: ");
+                if (!Consola::leerDecimal("Latitud (ej. 10.4631): ", c.latitud) ||
+                    !Consola::leerDecimal("Longitud (ej. -73.2532): ", c.longitud)) {
+                    std::cout << "Coordenadas invalidas.\n";
+                } else {
+                    c.activa = true;
+                    std::cout << (sistema.agregarCiudad(c) ? "Ciudad agregada con ID " + std::to_string(c.id) + ".\n"
+                                                           : "No se pudo agregar.\n");
+                }
+                Consola::pausar();
+            } else if (op == "2") {
+                int id = 0;
+                if (!Consola::leerEntero("ID de ciudad a modificar: ", id) ||
+                    sistema.obtenerCiudades().find(id) == sistema.obtenerCiudades().end()) {
+                    std::cout << "Ciudad no encontrada.\n";
+                    Consola::pausar();
+                    continue;
+                }
+                Ciudad c = sistema.obtenerCiudades().at(id);
+                std::string s = Consola::leerLinea("Nuevo nombre (ENTER para '" + c.nombre + "'): ");
+                if (!s.empty()) c.nombre = s;
+                s = Consola::leerLinea("Nuevo departamento (ENTER para '" + c.departamento + "'): ");
+                if (!s.empty()) c.departamento = s;
+                double d = 0.0;
+                if (Consola::leerDecimal("Nueva latitud (ENTER para mantener): ", d)) c.latitud = d;
+                if (Consola::leerDecimal("Nueva longitud (ENTER para mantener): ", d)) c.longitud = d;
+                sistema.modificarCiudad(id, c);
+                std::cout << "Ciudad actualizada correctamente.\n";
+                Consola::pausar();
+            } else if (op == "3") {
+                int id = 0;
+                if (Consola::leerEntero("ID de ciudad a desactivar/reactivar: ", id) &&
+                    sistema.obtenerCiudades().find(id) != sistema.obtenerCiudades().end()) {
+                    bool nuevo = !sistema.obtenerCiudades().at(id).activa;
+                    sistema.cambiarEstadoCiudad(id, nuevo);
+                    std::cout << "Ciudad marcada como " << (nuevo ? "ACTIVA.\n" : "DESACTIVADA.\n");
+                } else {
+                    std::cout << "Ciudad no encontrada.\n";
+                }
+                Consola::pausar();
+            } else if (op == "4") {
+                int id = 0;
+                if (Consola::leerEntero("ID de ciudad a eliminar (borra rutas incidentes): ", id) &&
+                    sistema.eliminarCiudad(id)) {
+                    std::cout << "Ciudad y sus rutas incidentes eliminadas.\n";
+                } else {
+                    std::cout << "Ciudad no encontrada.\n";
+                }
+                Consola::pausar();
+            } else if (op == "0") {
+                volver = true;
+            }
+        }
+    }
+
+    void menuGestionRutas() {
+        bool volver = false;
+        while (!volver) {
+            mostrarEncabezado("GESTION DE RUTAS Y PEAJES (ARISTAS DE LOS 3 GRAFOS)");
+            std::cout << std::left << std::setw(5) << "ID" << std::setw(34) << "CORREDOR"
+                      << std::setw(9) << "KM" << std::setw(8) << "HORAS"
+                      << std::setw(16) << "COMBUSTIBLE" << std::setw(16) << "PEAJES"
+                      << std::setw(13) << "CATEGORIA" << "VAL/EST\n";
+            std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+            for (const auto& par : sistema.obtenerRutas()) {
+                const RutaTramo& r = par.second;
+                std::string corr = sistema.nombreCiudad(r.idOrigen) + " <-> " + sistema.nombreCiudad(r.idDestino);
+                if (corr.size() > 32) corr = corr.substr(0, 30) + "..";
+                std::cout << std::left << std::setw(5) << r.idRuta
+                          << std::setw(34) << corr
+                          << std::setw(9) << std::fixed << std::setprecision(1) << r.distanciaKm
+                          << std::setw(8) << r.tiempoHoras
+                          << std::setw(16) << Consola::formatoCOP(r.costoCombustibleCOP)
+                          << std::setw(16) << Consola::formatoCOP(r.costoPeajesCOP)
+                          << std::setw(13) << r.categoriaVia
+                          << (r.validado ? "SI/" : "NO/") << (r.activa ? "ACT" : "INA") << "\n";
+            }
+            std::cout << "\n  1) Ingresar ruta   2) Modificar ruta/peajes   3) Desactivar/Reactivar (Cierre vial)   4) Eliminar   0) Volver\n";
+            std::string op = Consola::leerLinea("Opcion: ");
+
+            if (op == "1") {
+                listarCiudadesCompacto();
+                RutaTramo r;
+                r.idRuta = sistema.siguienteIdRuta();
+                if (!Consola::leerEntero("ID ciudad origen : ", r.idOrigen) ||
+                    !Consola::leerEntero("ID ciudad destino: ", r.idDestino) ||
+                    !Consola::leerDecimal("Distancia (km): ", r.distanciaKm) ||
+                    !Consola::leerDecimal("Tiempo estimado (horas): ", r.tiempoHoras) ||
+                    !Consola::leerDecimal("Costo combustible (COP): ", r.costoCombustibleCOP) ||
+                    !Consola::leerEntero("Cantidad de peajes: ", r.cantidadPeajes) ||
+                    !Consola::leerDecimal("Costo total peajes (COP): ", r.costoPeajesCOP)) {
+                    std::cout << "Datos numericos invalidos.\n";
+                } else {
+                    r.categoriaVia = Consola::leerLinea("Categoria vial (Concesion 4G / Primaria / Secundaria): ");
+                    if (r.categoriaVia.empty()) r.categoriaVia = "Primaria";
+                    r.validado = (Consola::leerLinea("Tramo validado? (1=Si, 0=No): ") != "0");
+                    r.activa = true;
+                    std::cout << (sistema.agregarRuta(r) ? "Ruta agregada con ID " + std::to_string(r.idRuta) + ".\n"
+                                                         : "Error: verifique que las ciudades existan y sean distintas.\n");
+                }
+                Consola::pausar();
+            } else if (op == "2") {
+                int idR = 0;
+                if (!Consola::leerEntero("ID de ruta a modificar: ", idR) ||
+                    sistema.obtenerRutas().find(idR) == sistema.obtenerRutas().end()) {
+                    std::cout << "Ruta no encontrada.\n";
+                    Consola::pausar();
+                    continue;
+                }
+                RutaTramo r = sistema.obtenerRutas().at(idR);
+                double d = 0.0;
+                int ent = 0;
+                if (Consola::leerDecimal("Nueva distancia km (ENTER mantener " + std::to_string(static_cast<int>(r.distanciaKm)) + "): ", d)) r.distanciaKm = d;
+                if (Consola::leerDecimal("Nuevo tiempo horas (ENTER mantener): ", d)) r.tiempoHoras = d;
+                if (Consola::leerDecimal("Nuevo combustible COP (ENTER mantener): ", d)) r.costoCombustibleCOP = d;
+                if (Consola::leerEntero("Nueva cantidad peajes (ENTER mantener): ", ent)) r.cantidadPeajes = ent;
+                if (Consola::leerDecimal("Nuevo costo peajes COP (ENTER mantener): ", d)) r.costoPeajesCOP = d;
+                std::string s = Consola::leerLinea("Nueva categoria (ENTER mantener '" + r.categoriaVia + "'): ");
+                if (!s.empty()) r.categoriaVia = s;
+                s = Consola::leerLinea("Validado? 1=Si / 0=No (ENTER mantener): ");
+                if (s == "1" || s == "0") r.validado = (s == "1");
+                sistema.modificarRuta(idR, r);
+                std::cout << "Ruta actualizada y los 3 grafos fueron sincronizados.\n";
+                Consola::pausar();
+            } else if (op == "3") {
+                int idR = 0;
+                if (Consola::leerEntero("ID de ruta para activar/desactivar (simular cierre vial): ", idR) &&
+                    sistema.obtenerRutas().find(idR) != sistema.obtenerRutas().end()) {
+                    bool nuevo = !sistema.obtenerRutas().at(idR).activa;
+                    sistema.cambiarEstadoRuta(idR, nuevo);
+                    std::cout << "Ruta " << idR << " marcada como " << (nuevo ? "ACTIVA.\n" : "DESACTIVADA (cerrada).\n");
+                } else {
+                    std::cout << "Ruta no encontrada.\n";
+                }
+                Consola::pausar();
+            } else if (op == "4") {
+                int idR = 0;
+                if (Consola::leerEntero("ID de ruta a eliminar: ", idR) && sistema.eliminarRuta(idR)) {
+                    std::cout << "Ruta eliminada de los 3 grafos.\n";
+                } else {
+                    std::cout << "Ruta no encontrada.\n";
+                }
+                Consola::pausar();
+            } else if (op == "0") {
+                volver = true;
+            }
+        }
+    }
+
+    void menuEntidadesInvestigacion() {
+        bool volver = false;
+        while (!volver) {
+            mostrarEncabezado("GESTION DE GRUPOS, INVESTIGADORES Y PRODUCTOS TECNICOS VIALES");
+            std::cout << "[GRUPOS E INVESTIGADORES]\n";
+            std::cout << std::left << std::setw(5) << "ID" << std::setw(32) << "GRUPO"
+                      << std::setw(22) << "REGION" << std::setw(26) << "INVESTIGADOR LIDER" << "ESTADO\n";
+            std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+            for (const auto& par : sistema.obtenerGrupos()) {
+                const GrupoInvestigacion& g = par.second;
+                std::cout << std::left << std::setw(5) << g.idGrupo << std::setw(32) << g.nombreGrupo
+                          << std::setw(22) << g.region << std::setw(26) << g.investigadorLider
+                          << (g.activo ? "ACTIVO" : "DESACTIVADO") << "\n";
+            }
+
+            std::cout << "\n[PRODUCTOS TECNICOS (CATEGORIA Y VALIDACION)]\n";
+            std::cout << std::left << std::setw(5) << "ID" << std::setw(8) << "GRUPO"
+                      << std::setw(40) << "NOMBRE DEL PRODUCTO" << std::setw(24) << "CATEGORIA"
+                      << std::setw(12) << "VALIDADO" << "ESTADO\n";
+            std::cout << "--------------------------------------------------------------------------------------------------------------\n";
+            for (const auto& par : sistema.obtenerProductos()) {
+                const ProductoTecnico& pr = par.second;
+                std::cout << std::left << std::setw(5) << pr.idProducto << std::setw(8) << pr.idGrupo
+                          << std::setw(40) << pr.nombreProducto << std::setw(24) << pr.categoria
+                          << std::setw(12) << (pr.validado ? "VALIDADO" : "PENDIENTE")
+                          << (pr.activo ? "ACTIVO" : "DESACTIVADO") << "\n";
+            }
+
+            std::cout << "\n  GRUPOS   : 1) Ingresar   2) Modificar   3) Desactivar/Reactivar   4) Eliminar\n";
+            std::cout << "  PRODUCTOS: 5) Ingresar   6) Modificar   7) Desactivar/Reactivar   8) Eliminar   0) Volver\n";
+            std::string op = Consola::leerLinea("Opcion: ");
+
+            if (op == "1") {
+                GrupoInvestigacion g;
+                g.idGrupo = sistema.siguienteIdGrupo();
+                g.nombreGrupo = Consola::leerLinea("Nombre del grupo: ");
+                g.region = Consola::leerLinea("Region de cobertura: ");
+                g.investigadorLider = Consola::leerLinea("Nombre del investigador lider: ");
+                g.activo = true;
+                sistema.agregarGrupo(g);
+                std::cout << "Grupo creado con ID " << g.idGrupo << ".\n";
+                Consola::pausar();
+            } else if (op == "2") {
+                int id = 0;
+                if (Consola::leerEntero("ID de grupo a modificar: ", id) &&
+                    sistema.obtenerGrupos().find(id) != sistema.obtenerGrupos().end()) {
+                    GrupoInvestigacion g = sistema.obtenerGrupos().at(id);
+                    std::string s = Consola::leerLinea("Nuevo nombre (ENTER mantener): ");
+                    if (!s.empty()) g.nombreGrupo = s;
+                    s = Consola::leerLinea("Nueva region (ENTER mantener): ");
+                    if (!s.empty()) g.region = s;
+                    s = Consola::leerLinea("Nuevo investigador lider (ENTER mantener): ");
+                    if (!s.empty()) g.investigadorLider = s;
+                    sistema.modificarGrupo(id, g);
+                    std::cout << "Grupo actualizado.\n";
+                } else {
+                    std::cout << "Grupo no encontrado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "3") {
+                int id = 0;
+                if (Consola::leerEntero("ID de grupo: ", id) &&
+                    sistema.obtenerGrupos().find(id) != sistema.obtenerGrupos().end()) {
+                    bool nuevo = !sistema.obtenerGrupos().at(id).activo;
+                    sistema.cambiarEstadoGrupo(id, nuevo);
+                    std::cout << "Estado actualizado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "4") {
+                int id = 0;
+                if (Consola::leerEntero("ID de grupo a eliminar: ", id) && sistema.eliminarGrupo(id)) {
+                    std::cout << "Grupo eliminado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "5") {
+                ProductoTecnico pr;
+                pr.idProducto = sistema.siguienteIdProducto();
+                if (!Consola::leerEntero("ID de grupo responsable: ", pr.idGrupo) ||
+                    sistema.obtenerGrupos().find(pr.idGrupo) == sistema.obtenerGrupos().end()) {
+                    std::cout << "Grupo inexistente.\n";
+                } else {
+                    pr.nombreProducto = Consola::leerLinea("Nombre del producto: ");
+                    pr.categoria = Consola::leerLinea("Categoria: ");
+                    pr.validado = (Consola::leerLinea("Validado? (1=Si, 0=No): ") != "0");
+                    pr.activo = true;
+                    sistema.agregarProducto(pr);
+                    std::cout << "Producto agregado con ID " << pr.idProducto << ".\n";
+                }
+                Consola::pausar();
+            } else if (op == "6") {
+                int id = 0;
+                if (Consola::leerEntero("ID de producto a modificar: ", id) &&
+                    sistema.obtenerProductos().find(id) != sistema.obtenerProductos().end()) {
+                    ProductoTecnico pr = sistema.obtenerProductos().at(id);
+                    std::string s = Consola::leerLinea("Nuevo nombre (ENTER mantener): ");
+                    if (!s.empty()) pr.nombreProducto = s;
+                    s = Consola::leerLinea("Nueva categoria (ENTER mantener): ");
+                    if (!s.empty()) pr.categoria = s;
+                    s = Consola::leerLinea("Validado? 1=Si / 0=No (ENTER mantener): ");
+                    if (s == "1" || s == "0") pr.validado = (s == "1");
+                    sistema.modificarProducto(id, pr);
+                    std::cout << "Producto actualizado.\n";
+                } else {
+                    std::cout << "Producto no encontrado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "7") {
+                int id = 0;
+                if (Consola::leerEntero("ID de producto: ", id) &&
+                    sistema.obtenerProductos().find(id) != sistema.obtenerProductos().end()) {
+                    bool nuevo = !sistema.obtenerProductos().at(id).activo;
+                    sistema.cambiarEstadoProducto(id, nuevo);
+                    std::cout << "Estado del producto actualizado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "8") {
+                int id = 0;
+                if (Consola::leerEntero("ID de producto a eliminar: ", id) && sistema.eliminarProducto(id)) {
+                    std::cout << "Producto eliminado.\n";
+                }
+                Consola::pausar();
+            } else if (op == "0") {
+                volver = true;
+            }
+        }
+    }
+
+    void mostrarResumenEstadistico() const {
+        mostrarEncabezado("RESUMEN ESTADISTICO DESCRIPTIVO - RED VIAL DE COLOMBIA (PERA)");
+        ResumenEstadisticoPERA st = sistema.calcularEstadisticas();
+
+        std::cout << "  Capitales totales     : " << st.totalCiudades
+                  << " (Activas: " << st.ciudadesActivas
+                  << " | Conectadas: " << (st.ciudadesActivas - st.ciudadesAisladas)
+                  << " | Aisladas terrestres: " << st.ciudadesAisladas << ")\n";
+        std::cout << "  Corredores viales     : " << st.totalRutas
+                  << " (Activos en grafos: " << st.rutasActivas << ")\n";
+        std::cout << "  Grupos / Productos    : " << st.totalGrupos << " grupos | "
+                  << st.totalProductos << " productos (" << st.productosValidados << " validados)\n\n";
+
+        auto filaStat = [](const std::string& nom, const EstadisticaVariable& v, bool esCOP) {
+            auto fmt = [esCOP](double x) -> std::string {
+                if (esCOP) return Consola::formatoCOP(x);
+                std::ostringstream o;
+                o << std::fixed << std::setprecision(1) << x;
+                return o.str();
+            };
+            std::cout << "  " << std::left << std::setw(18) << nom
+                      << std::setw(15) << fmt(v.media)
+                      << std::setw(15) << fmt(v.mediana)
+                      << std::setw(15) << fmt(v.desvEstandar)
+                      << std::setw(15) << fmt(v.minimo)
+                      << std::setw(15) << fmt(v.maximo)
+                      << fmt(v.suma) << "\n";
+        };
+
+        std::cout << "  " << std::left << std::setw(18) << "VARIABLE"
+                  << std::setw(15) << "MEDIA"
+                  << std::setw(15) << "MEDIANA"
+                  << std::setw(15) << "DESV.EST."
+                  << std::setw(15) << "MINIMO"
+                  << std::setw(15) << "MAXIMO"
+                  << "SUMA TOTAL\n";
+        std::cout << "  ----------------------------------------------------------------------------------------------------------\n";
+        filaStat("Distancia (km)", st.distKm, false);
+        filaStat("Tiempo (horas)", st.tiempoHoras, false);
+        filaStat("Combustible", st.combustibleCOP, true);
+        filaStat("Peajes", st.peajesCOP, true);
+
+        std::cout << "\n  [TOP 5 CAPITALES CON MAYOR CONECTIVIDAD (GRADO DEL VERTICE)]\n";
+        for (const auto& hub : st.topHubs) {
+            std::cout << "    - " << std::left << std::setw(24) << sistema.nombreCiudad(hub.first)
+                      << ": " << hub.second << " corredores directos\n";
+        }
+
+        std::cout << "\n  [TOP 5 CORREDORES CON MAYOR COSTO EN PEAJES]\n";
+        const auto& rMap = sistema.obtenerRutas();
+        for (const auto& par : st.topRutasPeajes) {
+            const RutaTramo& r = rMap.at(par.first);
+            std::cout << "    - " << sistema.nombreCiudad(r.idOrigen) << " <-> "
+                      << sistema.nombreCiudad(r.idDestino) << " (" << r.cantidadPeajes
+                      << " peajes): " << Consola::formatoCOP(r.costoPeajesCOP) << "\n";
+        }
+
+        std::cout << "\n  [CAPITALES SIN CONEXION TERRESTRE INTEGRADA (GRADO 0)]\n    ";
+        if (st.listaAisladas.empty()) {
+            std::cout << "(Ninguna)";
+        } else {
+            for (std::size_t i = 0; i < st.listaAisladas.size(); ++i) {
+                if (i > 0) std::cout << ", ";
+                std::cout << sistema.nombreCiudad(st.listaAisladas[i]);
+            }
+        }
+        std::cout << "\n";
+        Consola::pausar();
+    }
+
+    void inspeccionarTresGrafos() const {
+        mostrarEncabezado("INSPECCION DE LOS 3 GRAFOS PONDERADOS (LISTAS DE ADYACENCIA)");
+        listarCiudadesCompacto();
+        int id = 0;
+        if (!Consola::leerEntero("\nIngrese ID de capital a inspeccionar en los 3 grafos: ", id) ||
+            sistema.obtenerCiudades().find(id) == sistema.obtenerCiudades().end()) {
+            std::cout << "Capital no encontrada.\n";
+            Consola::pausar();
+            return;
+        }
+
+        std::cout << "\nCapital seleccionada: " << sistema.nombreCiudad(id) << "\n";
+        auto mostrarGrafo = [&](const GrafoPonderado& g, bool esCOP) {
+            std::cout << "\n  [" << g.obtenerMetrica() << " (" << g.obtenerUnidad() << ")]\n";
+            const auto& adj = g.obtenerAdyacencia();
+            auto it = adj.find(id);
+            if (it == adj.end() || it->second.empty()) {
+                std::cout << "    (Sin aristas activas - vertice aislado o desactivado)\n";
+                return;
+            }
+            for (const AristaPonderada& a : it->second) {
+                std::cout << "    --> " << std::left << std::setw(24) << sistema.nombreCiudad(a.destino)
+                          << " | Peso: " << (esCOP ? Consola::formatoCOP(a.peso)
+                                                   : (std::to_string(static_cast<int>(a.peso)) + " km"))
+                          << " (Ruta #" << a.idRuta << ")\n";
+            }
+        };
+
+        mostrarGrafo(sistema.obtenerGrafoDistancia(), false);
+        mostrarGrafo(sistema.obtenerGrafoCombustible(), true);
+        mostrarGrafo(sistema.obtenerGrafoPeajes(), true);
+        Consola::pausar();
+    }
+
+    void mostrarInicioPersistencia() {
+        mostrarEncabezado("INICIALIZACION DE PERSISTENCIA");
+        std::cout << "  1) Cargar datos reales de Colombia desde '" << archivoDatos << "'\n";
+        std::cout << "  2) Ejecutar programa sin datos (grafos vacios)\n\n";
+        std::string op = Consola::leerLinea("Seleccione opcion [1-2]: ");
+        if (op == "1") {
+            if (PersistenciaPERA::cargarArchivo(sistema, archivoDatos)) {
+                std::cout << "\nCargados " << sistema.obtenerCiudades().size() << " capitales y "
+                          << sistema.obtenerRutas().size() << " corredores en los 3 grafos.\n";
+            } else {
+                std::cout << "\nNo se encontro '" << archivoDatos << "'. Se inicio sin datos.\n";
+            }
+        } else {
+            sistema.limpiarTodo();
+            std::cout << "\nSistema iniciado vacio.\n";
+        }
+        Consola::pausar();
+    }
+
+public:
+    explicit InterfazPERA(SistemaPERA& s) : sistema(s) {}
+
+    void ejecutar() {
+        mostrarInicioPersistencia();
+        bool ejecutando = true;
+
+        while (ejecutando) {
+            mostrarEncabezado("MENU PRINCIPAL | Capitales: " +
+                              std::to_string(sistema.obtenerCiudades().size()) +
+                              " | Corredores: " + std::to_string(sistema.obtenerRutas().size()) +
+                              " | 3 Grafos Sincronizados: Distancia, Combustible, Peajes");
+            std::cout << "  1) Calcular costos entre 2 ciudades (Tiempo, Distancia, Combustible, Peajes)\n";
+            std::cout << "  2) Gestionar Ciudades / Capitales (CRUD + Desactivar)\n";
+            std::cout << "  3) Gestionar Rutas y Peajes (CRUD + Cierre Vial + Validacion)\n";
+            std::cout << "  4) Gestionar Grupos, Investigadores y Productos Tecnicos\n";
+            std::cout << "  5) Ver Resumen Estadistico Descriptivo\n";
+            std::cout << "  6) Inspeccionar Listas de Adyacencia de los 3 Grafos\n";
+            std::cout << "  7) Recargar archivo de persistencia ('" << archivoDatos << "')\n";
+            std::cout << "  8) Guardar cambios en persistencia ('" << archivoDatos << "')\n";
+            std::cout << "  0) Salir del programa\n\n";
+
+            std::string op = Consola::leerLinea("Seleccione una opcion [0-8]: ");
+            if (op == "1") {
+                menuCalcularRuta();
+            } else if (op == "2") {
+                menuGestionCiudades();
+            } else if (op == "3") {
+                menuGestionRutas();
+            } else if (op == "4") {
+                menuEntidadesInvestigacion();
+            } else if (op == "5") {
+                mostrarResumenEstadistico();
+            } else if (op == "6") {
+                inspeccionarTresGrafos();
+            } else if (op == "7") {
+                if (PersistenciaPERA::cargarArchivo(sistema, archivoDatos)) {
+                    std::cout << "Persistencia recargada exitosamente.\n";
+                } else {
+                    std::cout << "No se pudo abrir '" << archivoDatos << "'.\n";
+                }
+                Consola::pausar();
+            } else if (op == "8") {
+                if (PersistenciaPERA::guardarArchivo(sistema, archivoDatos)) {
+                    std::cout << "Datos guardados correctamente en '" << archivoDatos << "'.\n";
+                } else {
+                    std::cout << "Error al guardar '" << archivoDatos << "'.\n";
+                }
+                Consola::pausar();
+            } else if (op == "0") {
+                std::string g = Consola::leerLinea("Desea guardar cambios en '" + archivoDatos + "' antes de salir? (s/n): ");
+                if (g == "s" || g == "S") {
+                    PersistenciaPERA::guardarArchivo(sistema, archivoDatos);
+                }
+                ejecutando = false;
+            }
+        }
+
+        Consola::limpiarPantalla();
+        std::cout << "Sesion PERA finalizada. Presione ENTER para cerrar...\n";
+        Consola::leerLinea("");
+    }
+};
+
+// ============================================================================
+// PUNTO DE ENTRADA PRINCIPAL
+// ============================================================================
 int main() {
     Consola::inicializar();
     SistemaPERA pera;
-    if (PersistenciaPERA::cargarArchivo(pera, "datos_pera.txt")) {
-        for (int c = 1; c <= 4; ++c) {
-            auto r = pera.calcularRutaOptima(16, 1, c);
-            std::cout << r.criterio << " -> Dist: " << r.distanciaTotalKm
-                      << " km | Tiempo: " << Consola::formatoHoras(r.tiempoTotalHoras)
-                      << " | Comb: " << Consola::formatoCOP(r.combustibleTotalCOP)
-                      << " | Peajes (" << r.totalPeajes << "): " << Consola::formatoCOP(r.peajesTotalCOP) << "\n";
-        }
-        auto iso = pera.calcularRutaOptima(16, 28, 1);
-        std::cout << "Valledupar -> San Andres: " << iso.mensaje << "\n";
-        auto st = pera.calcularEstadisticas();
-        std::cout << "Stats OK: activas=" << st.ciudadesActivas << ", aisladas=" << st.ciudadesAisladas
-                  << ", mediaDist=" << st.distKm.media << " km\n";
-    }
+    InterfazPERA interfaz(pera);
+    interfaz.ejecutar();
     return 0;
 }
