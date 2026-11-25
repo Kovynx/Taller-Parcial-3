@@ -1,8 +1,13 @@
 ---
 tipo: nodo
 proyecto: Parcial 3 (PERA - Grafos Colombia)
-estado: pendiente
-archivos: []
+estado: completado
+archivos:
+  - parcial3_pera/docs/uml_casos_uso_parcial3.png
+  - parcial3_pera/docs/uml_secuencia_parcial3.png
+  - parcial3_pera/docs/uml_estados_parcial3.png
+  - parcial3_pera/Especificacion_Tecnica_Parcial_3.docx
+  - parcial3_pera/Identificacion_Estudiantes.txt
 dependencias:
   - "[[Parcial-3-PERA-Grafos]]"
   - "[[Entregables-y-Fechas]]"

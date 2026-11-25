@@ -1,0 +1,30 @@
+======================================================================
+UNIVERSIDAD POPULAR DEL CESAR
+FACULTAD DE INGENIERIA Y TECNOLOGICAS - INGENIERIA DE SISTEMAS
+ESTRUCTURA DE DATOS - PARCIAL 3 (PERA - GRAFOS COLOMBIA) - 2026-2
+======================================================================
+
+INICIALES DE ARCHIVOS FUENTE: KM-DV-ST
+ARCHIVOS ENTREGADOS:
+  - Parcial_3_KM-DV-ST.cpp
+  - Parcial_3_KM-DV-ST.py
+  - datos_pera.txt
+  - Especificacion_Tecnica_Parcial_3.docx
+  - Identificacion_Estudiantes.txt
+
+INTEGRANTES DEL GRUPO:
+1. Kovyn Been Mena Orcasita
+   Correo institucional: kbmena@unicesar.edu.co
+   Identificacion: (completar antes del envio)
+
+2. Damian Jose Velasquez Gonzalez
+   Correo institucional: (completar antes del envio)
+   Identificacion: (completar antes del envio)
+
+3. Sofia Isabel Tovar Rodriguez
+   Correo institucional: (completar antes del envio)
+   Identificacion: (completar antes del envio)
+
+NUMERO DE GRUPO: (completar antes del envio)
+ENLACE VIDEO YOUTUBE: (pegar enlace del video de 10 minutos antes del envio)
+======================================================================
