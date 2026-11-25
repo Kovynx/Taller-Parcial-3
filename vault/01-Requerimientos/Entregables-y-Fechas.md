@@ -12,22 +12,21 @@ correo: adithperez@unicesar.edu.co
 
 ## Empaquetado (Dos `.zip` Independientes)
 - Se deben generar y enviar **2 archivos `.zip` completamente separados**:
-  1. `Taller_3_Grupo_#.zip` (con asunto de Taller 3).
-  2. `Parcial_3_Grupo_#.zip` (con asunto de Parcial 3).
+  1. `Taller_3_Grupo_05.zip` (con asunto de Taller 3).
+  2. `Parcial_3_Grupo_05.zip` (con asunto de Parcial 3).
 
 ## Plantilla Oficial de Requerimientos (Enlace Extraído del PDF)
 - `https://unicesareduco-my.sharepoint.com/:w:/g/personal/adithperez_unicesar_edu_co/IQAhO93UkpNjSIx8nGwWnZoRAfgPdmmyZQ3Y-LBVNTP6LO8?e=sQCvja`
 
 ## Asuntos de Correo (Subject)
-- **Taller 3:** `Estructura de datos Taller 3 Grupo # 2026-2`
-- **Parcial 3:** `Estructura de datos Parcial 3 Grupo # 2026-2`
-*(Reemplazar `#` por el número de grupo correspondiente).*
+- **Taller 3:** `Estructura de datos Taller 3 Grupo 05 2026-2`
+- **Parcial 3:** `Estructura de datos Parcial 3 Grupo 05 2026-2`
 
 ## Integrantes del Grupo e Iniciales Oficiales (`KM-DV-ST`)
 1. **Kovyn Been Mena Orcasita** (`KM`) — `kbmena@unicesar.edu.co`
 2. **Damian Jose Velasquez Gonzalez** (`DV`)
 3. **Sofia Isabel Tovar Rodriguez** (`ST`)
-*(Completar cédulas/códigos y correos institucionales faltantes en `Identificacion_Estudiantes.txt` y el número de `Grupo #` del asunto del correo).*
+*(Curso: Grupo 05 de Estructura de Datos 2026-2).*
 
 ## Reglas de Nombrado de Archivos Fuente
 - **Iniciales oficiales:** `KM-DV-ST`

@@ -213,7 +213,7 @@ def process_group(grupo: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--grupo", default="X")
+    parser.add_argument("--grupo", default="05")
     args = parser.parse_args()
     process_group(args.grupo)
 
