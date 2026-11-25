@@ -509,6 +509,24 @@ def generar_docx_ieee830(ruta_docx: Path, img_uc: Path, img_seq: Path, img_est: 
         "activa, gris punteado desactivado) y franja inferior fija para los tres recorridos."
     )
 
+    capturas = [
+        (DOCS_DIR / "captura_cpp_windows_arbol.png",
+         "Figura 1. Ejecucion en Windows 10 de Taller_3_KM-DV-ST.cpp: arbol AVL 2D con GotoXY(), nodo desactivado (35*) y recorridos fijos."),
+        (DOCS_DIR / "captura_cpp_windows_demo_rl.png",
+         "Figura 2. Modo Demo Pedagogico en C++17 (Paso 7/7): Rotacion Doble Derecha-Izquierda (RL) y arbol simetrico final."),
+        (DOCS_DIR / "captura_python_windows_gui.png",
+         "Figura 3. Interfaz grafica en Windows 10 de Taller_3_KM-DV-ST.py (tkinter): codigo de colores por FE y panel inferior de recorridos."),
+    ]
+    for ruta_cap, pie in capturas:
+        if ruta_cap.exists():
+            p_cap = doc.add_paragraph()
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.add_run().add_picture(str(ruta_cap), width=Inches(5.9))
+            p_pie = doc.add_paragraph(pie)
+            p_pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_pie.runs[0].italic = True
+            p_pie.runs[0].font.size = Pt(9)
+
     doc.add_heading("3.1.2 Interfaces de hardware", level=3)
     doc.add_paragraph(
         "Requiere un computador estandar x86_64 con teclado, monitor de resolucion minima 1024x720 "
