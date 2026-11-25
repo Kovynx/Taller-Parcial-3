@@ -2,7 +2,7 @@
 tipo: moc-proyecto
 proyecto: Taller 3 (PAA - Árboles AVL)
 requerimiento: "[[Taller-3-PAA-AVL]]"
-estado: pendiente
+estado: en-qa-windows
 ---
 
 # MOC — Taller 3 (Programa de Aprendizaje de Árboles - AVL)

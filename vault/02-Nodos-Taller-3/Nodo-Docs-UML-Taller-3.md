@@ -1,8 +1,14 @@
 ---
 tipo: nodo
 proyecto: Taller 3 (PAA - Árboles AVL)
-estado: pendiente
-archivos: []
+estado: en-qa-windows
+archivos:
+  - taller3_avl/Especificacion_Tecnica_Taller_3.docx
+  - taller3_avl/Identificacion_Estudiantes.txt
+  - taller3_avl/docs/uml_casos_uso_taller3.png
+  - taller3_avl/docs/uml_secuencia_taller3.png
+  - taller3_avl/docs/uml_estados_taller3.png
+  - scripts/generar_docs_taller3.py
 dependencias:
   - "[[Taller-3-PAA-AVL]]"
   - "[[Entregables-y-Fechas]]"
@@ -14,9 +20,12 @@ ultima_actualizacion: 2026-11-25
 ## Propósito
 Centralizar el documento técnico Word (`.docx`), la plantilla de requerimientos, las variables de entrada/salida, los diagramas UML (Casos de Uso, Secuencia, Estados), el archivo de identificación de estudiantes y los insumos del video de 10 minutos.
 
-## Archivos Exactos (Actualizar al crear)
-- `plantilla_formato.doc` — Plantilla oficial **IEEE Std 830-1998 (SRS)** en formato binario Word 97-2003 (`.doc`).
-- *(Pendiente al generar: `taller3_avl/Especificacion_Tecnica_Taller_3.docx`, imágenes PNG de UML y `taller3_avl/Identificacion_Estudiantes.txt`)*
+## Archivos Exactos
+- `plantilla_formato.doc` — Plantilla oficial **IEEE Std 830-1998 (SRS)** de referencia.
+- `taller3_avl/Especificacion_Tecnica_Taller_3.docx` — Informe IEEE 830 completo (`602 KB`) con los 3 diagramas UML embebidos y 0 rastros de IA/plantillas.
+- `taller3_avl/docs/uml_casos_uso_taller3.png`, `uml_secuencia_taller3.png`, `uml_estados_taller3.png` — Diagramas UML a 220 DPI verificados visualmente.
+- `taller3_avl/Identificacion_Estudiantes.txt` — Datos del grupo `KM-DV-ST` (falta completar cédulas, correos faltantes, `Grupo #` y URL de YouTube).
+- `scripts/generar_docs_taller3.py` — Script generador interno (excluido del `.zip`).
 
 ## Estructura Exacta Exigida por `plantilla_formato.doc` (IEEE 830)
 > **Nota técnica:** `plantilla_formato.doc` es OLE2 `.doc` (no `.docx`). Se convierte a `.docx` con LibreOffice (`soffice --headless --convert-to docx plantilla_formato.doc`) o se genera con `python-docx` respetando fielmente todas sus secciones y eliminando los textos guía en color azul y los `MACROBUTTON NoMacro [...]`.
@@ -35,10 +44,11 @@ Centralizar el documento técnico Word (`.docx`), la plantilla de requerimientos
    - `4.4 Diagrama de Estados (UML)` (Ciclo de vida del nodo y árbol AVL)
 
 ## Checklist de Contenido Obligatorio
-- [ ] Diseño de la estructura de datos AVL y estrategia de solución
-- [ ] Variables de entrada y salida del modelo
-- [ ] Diagrama de Casos de Uso (UML)
-- [ ] Diagrama de Secuencia (UML)
-- [ ] Diagrama de Estados (UML)
-- [ ] Archivo texto con identificación de los 3 estudiantes
+- [x] Diseño de la estructura de datos AVL y estrategia de solución
+- [x] Variables de entrada y salida del modelo
+- [x] Diagrama de Casos de Uso (UML)
+- [x] Diagrama de Secuencia (UML)
+- [x] Diagrama de Estados (UML)
+- [ ] Completar cédulas, correos faltantes, `Grupo #` y URL YouTube en `Identificacion_Estudiantes.txt`
+- [ ] Insertar capturas reales de Windows en `Especificacion_Tecnica_Taller_3.docx` y actualizar Tabla de Contenido en MS Word
 - [ ] Video ~10 min en YouTube (identidad UPC, estudiantes visibles todo el tiempo)
