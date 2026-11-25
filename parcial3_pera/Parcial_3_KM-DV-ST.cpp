@@ -199,6 +199,34 @@ struct ProductoTecnico {
     bool activo;
 };
 
+struct EstadisticaVariable {
+    int n = 0;
+    double suma = 0.0;
+    double media = 0.0;
+    double mediana = 0.0;
+    double desvEstandar = 0.0;
+    double minimo = 0.0;
+    double maximo = 0.0;
+};
+
+struct ResumenEstadisticoPERA {
+    int totalCiudades = 0;
+    int ciudadesActivas = 0;
+    int ciudadesAisladas = 0;
+    int totalRutas = 0;
+    int rutasActivas = 0;
+    int totalGrupos = 0;
+    int totalProductos = 0;
+    int productosValidados = 0;
+    EstadisticaVariable distKm;
+    EstadisticaVariable tiempoHoras;
+    EstadisticaVariable combustibleCOP;
+    EstadisticaVariable peajesCOP;
+    std::vector<std::pair<int, int>> topHubs;            // (idCiudad, grado)
+    std::vector<std::pair<int, double>> topRutasPeajes;  // (idRuta, costoPeajesCOP)
+    std::vector<int> listaAisladas;
+};
+
 struct AristaPonderada {
     int destino;
     int idRuta;
@@ -361,6 +389,303 @@ public:
         auto it = ciudades.find(id);
         return (it != ciudades.end()) ? it->second.nombre : ("ID_" + std::to_string(id));
     }
+
+    // ---- CRUD completo y desactivacion: Ciudades ----
+    bool modificarCiudad(int id, const Ciudad& nueva) {
+        auto it = ciudades.find(id);
+        if (it == ciudades.end()) return false;
+        it->second = nueva;
+        it->second.id = id;
+        reconstruirGrafos();
+        return true;
+    }
+
+    bool cambiarEstadoCiudad(int id, bool activa) {
+        auto it = ciudades.find(id);
+        if (it == ciudades.end()) return false;
+        it->second.activa = activa;
+        reconstruirGrafos();
+        return true;
+    }
+
+    bool eliminarCiudad(int id) {
+        if (ciudades.erase(id) == 0) return false;
+        for (auto it = rutas.begin(); it != rutas.end();) {
+            if (it->second.idOrigen == id || it->second.idDestino == id) {
+                it = rutas.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        reconstruirGrafos();
+        return true;
+    }
+
+    // ---- CRUD completo y desactivacion: Rutas y Peajes ----
+    bool modificarRuta(int idRuta, const RutaTramo& nueva) {
+        auto it = rutas.find(idRuta);
+        if (it == rutas.end()) return false;
+        if (ciudades.find(nueva.idOrigen) == ciudades.end() ||
+            ciudades.find(nueva.idDestino) == ciudades.end() ||
+            nueva.idOrigen == nueva.idDestino) {
+            return false;
+        }
+        it->second = nueva;
+        it->second.idRuta = idRuta;
+        reconstruirGrafos();
+        return true;
+    }
+
+    bool cambiarEstadoRuta(int idRuta, bool activa) {
+        auto it = rutas.find(idRuta);
+        if (it == rutas.end()) return false;
+        it->second.activa = activa;
+        reconstruirGrafos();
+        return true;
+    }
+
+    bool eliminarRuta(int idRuta) {
+        if (rutas.erase(idRuta) == 0) return false;
+        reconstruirGrafos();
+        return true;
+    }
+
+    // ---- CRUD completo y desactivacion: Grupos e Investigadores ----
+    bool modificarGrupo(int idGrupo, const GrupoInvestigacion& nuevo) {
+        auto it = grupos.find(idGrupo);
+        if (it == grupos.end()) return false;
+        it->second = nuevo;
+        it->second.idGrupo = idGrupo;
+        return true;
+    }
+
+    bool cambiarEstadoGrupo(int idGrupo, bool activo) {
+        auto it = grupos.find(idGrupo);
+        if (it == grupos.end()) return false;
+        it->second.activo = activo;
+        return true;
+    }
+
+    bool eliminarGrupo(int idGrupo) {
+        if (grupos.erase(idGrupo) == 0) return false;
+        for (auto it = productos.begin(); it != productos.end();) {
+            if (it->second.idGrupo == idGrupo) {
+                it = productos.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        return true;
+    }
+
+    // ---- CRUD completo y desactivacion: Productos Tecnicos ----
+    bool modificarProducto(int idProducto, const ProductoTecnico& nuevo) {
+        auto it = productos.find(idProducto);
+        if (it == productos.end()) return false;
+        if (grupos.find(nuevo.idGrupo) == grupos.end()) return false;
+        it->second = nuevo;
+        it->second.idProducto = idProducto;
+        return true;
+    }
+
+    bool cambiarEstadoProducto(int idProducto, bool activo) {
+        auto it = productos.find(idProducto);
+        if (it == productos.end()) return false;
+        it->second.activo = activo;
+        return true;
+    }
+
+    bool eliminarProducto(int idProducto) {
+        return productos.erase(idProducto) > 0;
+    }
+
+    // ---- Algoritmo de Dijkstra O((V + E) log V) sobre los 3 Grafos ----
+    // criterio: 1 = Distancia (Grafo 1), 2 = Combustible (Grafo 2),
+    //           3 = Peajes (Grafo 3),    4 = Costo Total (Combustible + Peajes)
+    ResultadoRuta calcularRutaOptima(int idOrigen, int idDestino, int criterio) const {
+        ResultadoRuta res;
+        if (criterio == 1) res.criterio = "Menor Distancia (Grafo 1 - km)";
+        else if (criterio == 2) res.criterio = "Menor Combustible (Grafo 2 - COP)";
+        else if (criterio == 3) res.criterio = "Menor Peajes (Grafo 3 - COP)";
+        else res.criterio = "Menor Costo Total (Combustible + Peajes)";
+
+        auto itO = ciudades.find(idOrigen);
+        auto itD = ciudades.find(idDestino);
+        if (itO == ciudades.end() || itD == ciudades.end()) {
+            res.mensaje = "Una o ambas ciudades no existen en el sistema.";
+            return res;
+        }
+        if (!itO->second.activa || !itD->second.activa) {
+            res.mensaje = "Origen o destino se encuentra DESACTIVADO.";
+            return res;
+        }
+        if (idOrigen == idDestino) {
+            res.encontrada = true;
+            res.caminoCiudades.push_back(idOrigen);
+            res.mensaje = "Origen y destino corresponden a la misma capital.";
+            return res;
+        }
+
+        const GrafoPonderado* grafoBase = &grafoDistancia;
+        if (criterio == 2) grafoBase = &grafoCombustible;
+        else if (criterio == 3) grafoBase = &grafoPeajes;
+
+        const auto& adj = grafoBase->obtenerAdyacencia();
+        const double INF = std::numeric_limits<double>::infinity();
+        std::map<int, double> dist;
+        std::map<int, int> padreCiudad;
+        std::map<int, int> padreRuta;
+
+        for (const auto& par : adj) {
+            dist[par.first] = INF;
+        }
+
+        using ParCola = std::pair<double, int>;
+        std::priority_queue<ParCola, std::vector<ParCola>, std::greater<ParCola>> pq;
+        dist[idOrigen] = 0.0;
+        pq.push({0.0, idOrigen});
+
+        while (!pq.empty()) {
+            double dActual = pq.top().first;
+            int u = pq.top().second;
+            pq.pop();
+
+            if (dActual > dist[u]) continue;
+            if (u == idDestino) break;
+
+            auto itAdj = adj.find(u);
+            if (itAdj == adj.end()) continue;
+
+            for (const AristaPonderada& arista : itAdj->second) {
+                double peso = arista.peso;
+                if (criterio == 4) {
+                    const RutaTramo& r = rutas.at(arista.idRuta);
+                    peso = r.costoCombustibleCOP + r.costoPeajesCOP;
+                }
+                double nuevoCosto = dActual + peso;
+                if (nuevoCosto < dist[arista.destino]) {
+                    dist[arista.destino] = nuevoCosto;
+                    padreCiudad[arista.destino] = u;
+                    padreRuta[arista.destino] = arista.idRuta;
+                    pq.push({nuevoCosto, arista.destino});
+                }
+            }
+        }
+
+        if (dist.find(idDestino) == dist.end() || !std::isfinite(dist[idDestino])) {
+            res.encontrada = false;
+            res.mensaje = "No existe ruta terrestre activa entre " + itO->second.nombre +
+                          " y " + itD->second.nombre + " (componente desconectada o cierres viales).";
+            return res;
+        }
+
+        // Reconstruccion del camino optimo y acumulacion de las 4 metricas
+        int actual = idDestino;
+        while (actual != idOrigen) {
+            res.caminoCiudades.push_back(actual);
+            int idR = padreRuta[actual];
+            res.rutasUsadas.push_back(idR);
+            const RutaTramo& tramo = rutas.at(idR);
+            res.distanciaTotalKm += tramo.distanciaKm;
+            res.tiempoTotalHoras += tramo.tiempoHoras;
+            res.combustibleTotalCOP += tramo.costoCombustibleCOP;
+            res.totalPeajes += tramo.cantidadPeajes;
+            res.peajesTotalCOP += tramo.costoPeajesCOP;
+            actual = padreCiudad[actual];
+        }
+        res.caminoCiudades.push_back(idOrigen);
+        std::reverse(res.caminoCiudades.begin(), res.caminoCiudades.end());
+        std::reverse(res.rutasUsadas.begin(), res.rutasUsadas.end());
+
+        res.costoTotalCOP = res.combustibleTotalCOP + res.peajesTotalCOP;
+        res.encontrada = true;
+        res.mensaje = "Ruta optima calculada satisfactoriamente.";
+        return res;
+    }
+
+    // ---- Estadisticas Descriptivas sobre los 3 Grafos ----
+    static EstadisticaVariable resumirVector(std::vector<double> vals) {
+        EstadisticaVariable st;
+        if (vals.empty()) return st;
+        std::sort(vals.begin(), vals.end());
+        st.n = static_cast<int>(vals.size());
+        st.minimo = vals.front();
+        st.maximo = vals.back();
+        for (double v : vals) st.suma += v;
+        st.media = st.suma / st.n;
+        if (st.n % 2 == 1) {
+            st.mediana = vals[static_cast<std::size_t>(st.n / 2)];
+        } else {
+            st.mediana = 0.5 * (vals[static_cast<std::size_t>(st.n / 2 - 1)] +
+                                vals[static_cast<std::size_t>(st.n / 2)]);
+        }
+        double var = 0.0;
+        for (double v : vals) {
+            double diff = v - st.media;
+            var += diff * diff;
+        }
+        st.desvEstandar = std::sqrt(var / st.n);
+        return st;
+    }
+
+    ResumenEstadisticoPERA calcularEstadisticas() const {
+        ResumenEstadisticoPERA res;
+        res.totalCiudades = static_cast<int>(ciudades.size());
+        res.totalRutas = static_cast<int>(rutas.size());
+        res.totalGrupos = static_cast<int>(grupos.size());
+        res.totalProductos = static_cast<int>(productos.size());
+
+        for (const auto& par : productos) {
+            if (par.second.validado && par.second.activo) ++res.productosValidados;
+        }
+
+        std::vector<std::pair<int, int>> grados;
+        for (const auto& par : ciudades) {
+            if (par.second.activa) {
+                ++res.ciudadesActivas;
+                int g = grafoDistancia.grado(par.first);
+                grados.push_back({par.first, g});
+                if (g == 0) {
+                    ++res.ciudadesAisladas;
+                    res.listaAisladas.push_back(par.first);
+                }
+            }
+        }
+        std::sort(grados.begin(), grados.end(),
+                  [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+                      return a.second > b.second;
+                  });
+        for (std::size_t i = 0; i < std::min<std::size_t>(5, grados.size()); ++i) {
+            res.topHubs.push_back(grados[i]);
+        }
+
+        std::vector<double> vDist, vTiempo, vComb, vPeaj;
+        std::vector<std::pair<int, double>> rutasCosto;
+        for (const auto& par : rutas) {
+            const RutaTramo& r = par.second;
+            if (!r.activa) continue;
+            ++res.rutasActivas;
+            vDist.push_back(r.distanciaKm);
+            vTiempo.push_back(r.tiempoHoras);
+            vComb.push_back(r.costoCombustibleCOP);
+            vPeaj.push_back(r.costoPeajesCOP);
+            rutasCosto.push_back({r.idRuta, r.costoPeajesCOP});
+        }
+
+        res.distKm = resumirVector(vDist);
+        res.tiempoHoras = resumirVector(vTiempo);
+        res.combustibleCOP = resumirVector(vComb);
+        res.peajesCOP = resumirVector(vPeaj);
+
+        std::sort(rutasCosto.begin(), rutasCosto.end(),
+                  [](const std::pair<int, double>& a, const std::pair<int, double>& b) {
+                      return a.second > b.second;
+                  });
+        for (std::size_t i = 0; i < std::min<std::size_t>(5, rutasCosto.size()); ++i) {
+            res.topRutasPeajes.push_back(rutasCosto[i]);
+        }
+        return res;
+    }
 };
 
 // ============================================================================
@@ -477,14 +802,18 @@ int main() {
     Consola::inicializar();
     SistemaPERA pera;
     if (PersistenciaPERA::cargarArchivo(pera, "datos_pera.txt")) {
-        std::cout << "Cargado PERA: " << pera.obtenerCiudades().size() << " capitales, "
-                  << pera.obtenerRutas().size() << " rutas, "
-                  << pera.obtenerGrupos().size() << " grupos, "
-                  << pera.obtenerProductos().size() << " productos.\n";
-        std::cout << "Grado de Valledupar (ID 16) en los 3 grafos: "
-                  << pera.obtenerGrafoDistancia().grado(16) << " / "
-                  << pera.obtenerGrafoCombustible().grado(16) << " / "
-                  << pera.obtenerGrafoPeajes().grado(16) << "\n";
+        for (int c = 1; c <= 4; ++c) {
+            auto r = pera.calcularRutaOptima(16, 1, c);
+            std::cout << r.criterio << " -> Dist: " << r.distanciaTotalKm
+                      << " km | Tiempo: " << Consola::formatoHoras(r.tiempoTotalHoras)
+                      << " | Comb: " << Consola::formatoCOP(r.combustibleTotalCOP)
+                      << " | Peajes (" << r.totalPeajes << "): " << Consola::formatoCOP(r.peajesTotalCOP) << "\n";
+        }
+        auto iso = pera.calcularRutaOptima(16, 28, 1);
+        std::cout << "Valledupar -> San Andres: " << iso.mensaje << "\n";
+        auto st = pera.calcularEstadisticas();
+        std::cout << "Stats OK: activas=" << st.ciudadesActivas << ", aisladas=" << st.ciudadesAisladas
+                  << ", mediaDist=" << st.distKm.media << " km\n";
     }
     return 0;
 }
