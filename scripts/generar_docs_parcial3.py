@@ -54,10 +54,10 @@ def generar_uml_casos_uso(ruta_salida: Path) -> None:
     ]
 
     casos_der = [
-        (9.9, 6.6, "Sincronizar 3 grafos\n(Distancia, Combustible, Peajes)"),
-        (9.9, 5.2, "Generar Dashboard\nmatplotlib (4 graficos)"),
-        (9.9, 3.8, "Generar mapa interactivo\nFolium (bono)"),
-        (9.9, 2.4, "Guardar / Cargar\npersistencia compartida"),
+        (9.9, 7.0, "Guardar / Cargar\npersistencia compartida"),
+        (9.9, 5.0, "Sincronizar 3 grafos\n(Distancia, Combustible, Peajes)"),
+        (9.9, 3.0, "Generar Dashboard\nmatplotlib (4 graficos)"),
+        (9.9, 1.5, "Generar mapa interactivo\nFolium (bono)"),
     ]
 
     for cx, cy, txt in casos_izq:
@@ -70,14 +70,13 @@ def generar_uml_casos_uso(ruta_salida: Path) -> None:
         ax.text(cx, cy, txt, ha="center", va="center", fontsize=8.2, color="#0F172A", fontweight="bold")
 
     inclusiones = [
-        ((6.70, 7.00), (8.20, 6.60), "<<include>>", 0.0, 0.16),
-        ((6.70, 6.00), (8.20, 6.60), "<<include>>", 0.0, 0.14),
-        ((6.70, 5.00), (8.20, 6.60), "<<include>>", 0.0, -0.20),
-        ((6.70, 4.00), (8.20, 6.60), "<<include>>", 0.0, -0.22),
-        ((6.70, 3.00), (8.20, 6.60), "<<include>>", 0.0, -0.24),
-        ((6.70, 2.00), (8.20, 5.20), "<<include>>", 0.0, 0.16),
-        ((6.70, 2.00), (8.20, 3.80), "<<include>>", 0.0, -0.16),
-        ((6.70, 2.00), (8.20, 2.40), "<<include>>", 0.0, -0.22),
+        ((6.70, 7.00), (8.20, 7.00), "<<extend>>", 0.0, 0.16),
+        ((6.70, 6.00), (8.20, 5.30), "<<include>>", 0.05, 0.18),
+        ((6.70, 5.00), (8.20, 5.00), "<<include>>", 0.0, 0.16),
+        ((6.70, 4.00), (8.20, 4.70), "<<include>>", 0.05, -0.22),
+        ((6.70, 3.00), (8.20, 3.00), "<<include>>", 0.0, 0.16),
+        ((6.70, 2.00), (8.20, 2.75), "<<include>>", -0.10, 0.18),
+        ((6.70, 2.00), (8.20, 1.55), "<<extend>>", 0.0, -0.22),
     ]
     for (x1, y1), (x2, y2), label, dx, dy in inclusiones:
         ax.annotate("", xy=(x2, y2), xytext=(x1, y1), arrowprops=dict(arrowstyle="->", ls="--", color="#1565C0", lw=1.2))
@@ -90,41 +89,41 @@ def generar_uml_casos_uso(ruta_salida: Path) -> None:
 
 
 def generar_uml_secuencia(ruta_salida: Path) -> None:
-    fig, ax = plt.subplots(figsize=(11.8, 7.6), dpi=220)
-    ax.set_xlim(0, 12.4)
+    fig, ax = plt.subplots(figsize=(13.2, 7.6), dpi=220)
+    ax.set_xlim(0, 14.2)
     ax.set_ylim(0, 8.4)
     ax.axis("off")
 
-    ax.text(6.2, 8.1, "Diagrama de Secuencia UML - Calculo de Ruta Optima en los 3 Grafos y Renderizado", ha="center", va="center", fontsize=11.5, fontweight="bold", color="#1B5E20")
+    ax.text(7.1, 8.1, "Diagrama de Secuencia UML - Calculo de Ruta Optima en los 3 Grafos y Renderizado", ha="center", va="center", fontsize=11.5, fontweight="bold", color="#1B5E20")
 
     participantes = [
-        (1.3, "Usuario"),
-        (3.6, "InterfazPERA\n(C++ / Tkinter)"),
-        (6.4, "MotorGrafos\n(Dijkstra)"),
-        (9.6, "PersistenciaPERA\n(datos_pera.txt)"),
-        (12.0, "Visualizador\n(matplotlib / Folium)"),
+        (1.2, "Usuario"),
+        (3.8, "InterfazPERA\n(C++ / Tkinter)"),
+        (6.8, "MotorGrafos\n(Dijkstra)"),
+        (10.0, "PersistenciaPERA\n(datos_pera.txt)"),
+        (12.9, "Visualizador\n(matplotlib / Folium)"),
     ]
 
     for x, nombre in participantes:
-        caja = FancyBboxPatch((x - 1.05, 6.95), 2.1, 0.72, boxstyle="round,pad=0.06", fc="#E8F5E9", ec="#1B5E20", lw=1.6)
+        caja = FancyBboxPatch((x - 1.1, 6.95), 2.2, 0.72, boxstyle="round,pad=0.06", fc="#E8F5E9", ec="#1B5E20", lw=1.6)
         ax.add_patch(caja)
         ax.text(x, 7.31, nombre, ha="center", va="center", fontsize=8.2, fontweight="bold", color="#0F172A")
-        ax.plot([x, x], [6.95, 0.5], ls="--", color="#64748B", lw=1.3)
+        ax.plot([x, x], [6.95, 0.45], ls="--", color="#64748B", lw=1.3)
 
-    frag = FancyBboxPatch((5.3, 3.0), 4.6, 1.5, boxstyle="square,pad=0.05", fc="#FFF7ED", ec="#EA580C", lw=1.3, ls="--")
+    frag = FancyBboxPatch((5.6, 3.05), 5.0, 1.48, boxstyle="square,pad=0.05", fc="#FFF7ED", ec="#EA580C", lw=1.3, ls="--")
     ax.add_patch(frag)
-    ax.text(5.45, 4.32, "loop [para cada grafo G en {Dist, Comb, Peajes}]", ha="left", va="center", fontsize=8, fontweight="bold", color="#C2410C")
+    ax.text(5.75, 4.35, "loop [para cada grafo G en {Dist, Comb, Peajes}]", ha="left", va="center", fontsize=8, fontweight="bold", color="#C2410C")
 
     mensajes = [
-        (1.3, 3.6, 6.4, "1: solicitarRuta(origen, destino, modo)", False),
-        (3.6, 6.4, 5.85, "2: dijkstra(G, origen, destino)", False),
-        (6.4, 6.4, 5.25, "3: relajar aristas y actualizar distancias", False),
-        (6.4, 6.4, 3.85, "4: reconstruir camino (predecesores)", False),
-        (6.4, 3.6, 2.6, "5: retornar RutaOptima (costo, camino, metrica)", True),
-        (3.6, 12.0, 1.95, "6: renderizarDashboard(resultados)", False),
-        (3.6, 12.0, 1.35, "7: generarMapaFolium(resultados)", False),
-        (3.6, 9.6, 0.75, "8: guardarPersistencia(datos_pera.txt)", False),
-        (9.6, 3.6, 0.4, "9: confirmacionOK", True),
+        (1.2, 3.8, 6.4, "1: autenticar() y solicitarRuta(origen, destino)", False),
+        (3.8, 6.8, 5.85, "2: calcularRutaOptima(G, origen, destino)", False),
+        (6.8, 6.8, 5.25, "3: relajar aristas activas (Min-Heap)", False),
+        (6.8, 6.8, 3.82, "4: reconstruir camino y 4 metricas", False),
+        (6.8, 3.8, 2.6, "5: retornar ResultadoRuta (km, h, comb, peajes)", True),
+        (3.8, 12.9, 1.98, "6: renderizarDashboard(estadisticas)", False),
+        (3.8, 12.9, 1.40, "7: generarMapaFolium(redColombia, rutaOptima)", False),
+        (3.8, 10.0, 0.88, "8: guardarPersistencia(datos_pera.txt)", False),
+        (10.0, 3.8, 0.48, "9: confirmacionOK", True),
     ]
 
     for x1, x2, y, texto, retorno in mensajes:
@@ -170,12 +169,13 @@ def generar_uml_estados(ruta_salida: Path) -> None:
 
     transiciones = [
         ((0.98, 4.0), (1.85, 4.0), "altaRuta()", 0.0, 0.20),
-        ((4.35, 3.9), (5.55, 5.35), "calcularRuta()", -0.40, 0.28),
-        ((8.25, 5.35), (9.15, 4.45), "validarCategoria()", 0.45, 0.24),
-        ((9.15, 3.6), (4.35, 3.6), "rebalanceo de grafos\n(alturas actualizadas)", 0.0, -0.26),
-        ((3.1, 3.35), (3.1, 1.98), "desactivar()", -0.70, 0.0),
-        ((4.0, 1.98), (4.0, 3.35), "reactivar()", 0.70, 0.0),
-        ((4.35, 3.4), (5.55, 1.6), "eliminar()", 0.55, 0.16),
+        ((4.35, 3.9), (5.55, 5.35), "calcularRuta()", -0.45, 0.28),
+        ((8.25, 5.35), (9.15, 4.45), "validarCategoria()", 0.55, 0.24),
+        ((9.15, 3.6), (4.35, 3.6), "grafos sincronizados\n(pesos actualizados)", 0.0, -0.28),
+        ((2.65, 3.35), (2.65, 1.98), "desactivar()", -0.65, 0.0),
+        ((3.55, 1.98), (3.55, 3.35), "reactivar()", 0.52, 0.12),
+        ((4.35, 3.35), (5.55, 1.6), "eliminar()", 0.52, 0.18),
+        ((4.35, 1.4), (5.55, 1.4), "eliminar()", 0.0, -0.22),
         ((8.25, 1.6), (11.45, 1.6), "fin ciclo", 0.0, 0.24),
     ]
 
