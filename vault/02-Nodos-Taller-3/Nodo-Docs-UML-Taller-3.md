@@ -50,5 +50,5 @@ Centralizar el documento técnico Word (`.docx`), la plantilla de requerimientos
 - [x] Diagrama de Secuencia (UML)
 - [x] Diagrama de Estados (UML)
 - [ ] Completar cédulas, correos faltantes, `Grupo #` y URL YouTube en `Identificacion_Estudiantes.txt`
-- [ ] Insertar capturas reales de Windows en `Especificacion_Tecnica_Taller_3.docx` y actualizar Tabla de Contenido en MS Word
+- [x] Insertar 3 capturas reales de Windows 10 en `Especificacion_Tecnica_Taller_3.docx` (`3.1.1`)
 - [ ] Video ~10 min en YouTube (identidad UPC, estudiantes visibles todo el tiempo)
