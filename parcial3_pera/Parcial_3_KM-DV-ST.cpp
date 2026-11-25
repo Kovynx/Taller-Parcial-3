@@ -1339,6 +1339,48 @@ private:
         Consola::pausar();
     }
 
+    bool autenticarUsuario() const {
+        const std::string usuarioValido = "admin";
+        const std::string claveValida = "pera2026";
+
+        auto contieneEspacio = [](const std::string& s) {
+            for (char ch : s) {
+                if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') return true;
+            }
+            return false;
+        };
+
+        int intentos = 3;
+        while (intentos > 0) {
+            mostrarEncabezado("CONTROL DE ACCESO - SISTEMA PERA (Intentos restantes: " + std::to_string(intentos) + ")");
+            std::cout << "  Ingrese credenciales de acceso (no se permiten campos vacios ni espacios).\n\n";
+            std::string usr, pwd;
+            std::cout << "  Usuario    : ";
+            std::getline(std::cin, usr);
+            if (!usr.empty() && usr.back() == '\r') usr.pop_back();
+            std::cout << "  Contrasena : ";
+            std::getline(std::cin, pwd);
+            if (!pwd.empty() && pwd.back() == '\r') pwd.pop_back();
+
+            if (usr.empty() || pwd.empty() || contieneEspacio(usr) || contieneEspacio(pwd)) {
+                std::cout << "\n  [DENEGADO] No se permiten entradas vacias ni espacios en blanco.\n";
+                Consola::pausar();
+                continue;
+            }
+            if (usr == usuarioValido && pwd == claveValida) {
+                std::cout << "\n  [OK] Acceso concedido. Bienvenido al sistema PERA.\n";
+                Consola::pausar();
+                return true;
+            }
+            --intentos;
+            std::cout << "\n  [DENEGADO] Credenciales incorrectas.\n";
+            Consola::pausar();
+        }
+        std::cout << "\n  Se agotaron los 3 intentos de acceso. El programa se cerrara.\n";
+        Consola::pausar();
+        return false;
+    }
+
     void mostrarInicioPersistencia() {
         mostrarEncabezado("INICIALIZACION DE PERSISTENCIA");
         std::cout << "  1) Cargar datos reales de Colombia desde '" << archivoDatos << "'\n";
@@ -1362,6 +1404,7 @@ public:
     explicit InterfazPERA(SistemaPERA& s) : sistema(s) {}
 
     void ejecutar() {
+        if (!autenticarUsuario()) return;
         mostrarInicioPersistencia();
         bool ejecutando = true;
 

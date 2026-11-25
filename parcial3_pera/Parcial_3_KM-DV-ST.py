@@ -610,8 +610,136 @@ class PersistenciaPERA:
 
 
 # ============================================================================
-# CAPA 4: INTERFAZ GRAFICA TKINTER, DASHBOARD MATPLOTLIB Y BONO FOLIUM
+# CAPA 4: VENTANA DE ACCESO, INTERFAZ TKINTER, DASHBOARD Y BONO FOLIUM
 # ============================================================================
+USUARIO_PREDEF = "admin"
+CLAVE_PREDEF = "pera2026"
+
+
+class VentanaAccesoPERA:
+    def __init__(self, root: tk.Tk) -> None:
+        self.root = root
+        self.autenticado = False
+        self.intentos_restantes = 3
+
+        self.win = tk.Toplevel(root)
+        self.win.title("Acceso al Sistema PERA - Colombia")
+        self.win.geometry("420x300")
+        self.win.resizable(False, False)
+        self.win.configure(bg="#F8FAFC")
+        self.win.protocol("WM_DELETE_WINDOW", self._cancelar)
+
+        enc = tk.Frame(self.win, bg="#0F4C81", height=64)
+        enc.pack(fill=tk.X)
+        enc.pack_propagate(False)
+        tk.Label(
+            enc,
+            text="MINTRANSPORTE COLOMBIA / UPC\nControl de Acceso - Sistema PERA",
+            bg="#0F4C81",
+            fg="#FFFFFF",
+            font=("Segoe UI", 11, "bold"),
+        ).pack(expand=True)
+
+        cuerpo = tk.Frame(self.win, bg="#F8FAFC", padx=28, pady=16)
+        cuerpo.pack(fill=tk.BOTH, expand=True)
+
+        self.var_usuario = tk.StringVar()
+        self.var_clave = tk.StringVar()
+        self.var_aviso = tk.StringVar(value="Ingrese sus credenciales (sin espacios en blanco).")
+
+        tk.Label(cuerpo, text="Usuario:", bg="#F8FAFC", fg="#1E293B", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        self.ent_usuario = ttk.Entry(cuerpo, textvariable=self.var_usuario)
+        self.ent_usuario.pack(fill=tk.X, pady=(2, 8))
+
+        tk.Label(cuerpo, text="Contrasena:", bg="#F8FAFC", fg="#1E293B", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        self.ent_clave = ttk.Entry(cuerpo, textvariable=self.var_clave, show="*")
+        self.ent_clave.pack(fill=tk.X, pady=(2, 8))
+
+        tk.Label(
+            cuerpo,
+            textvariable=self.var_aviso,
+            bg="#F8FAFC",
+            fg="#B91C1C",
+            font=("Segoe UI", 8, "bold"),
+            wraplength=360,
+            justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        btns = tk.Frame(cuerpo, bg="#F8FAFC")
+        btns.pack(fill=tk.X)
+        tk.Button(
+            btns,
+            text="Ingresar",
+            bg="#0F4C81",
+            fg="#FFFFFF",
+            activebackground="#0C3B66",
+            activeforeground="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Segoe UI", 9, "bold"),
+            padx=18,
+            pady=6,
+            cursor="hand2",
+            command=self._validar,
+        ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 6))
+
+        tk.Button(
+            btns,
+            text="Salir",
+            bg="#991B1B",
+            fg="#FFFFFF",
+            activebackground="#7F1D1D",
+            activeforeground="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Segoe UI", 9, "bold"),
+            padx=18,
+            pady=6,
+            cursor="hand2",
+            command=self._cancelar,
+        ).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(6, 0))
+
+        self.win.bind("<Return>", lambda _e: self._validar())
+        self.ent_usuario.focus_set()
+        self.win.grab_set()
+
+    def _validar(self) -> None:
+        usuario_raw = self.var_usuario.get()
+        clave_raw = self.var_clave.get()
+
+        # Validacion estricta: prohibe campos vacios, solo espacios o espacios internos
+        if not usuario_raw or not clave_raw or not usuario_raw.strip() or not clave_raw.strip():
+            self.var_aviso.set("Acceso denegado: no se permiten campos vacios ni espacios.")
+            return
+        if any(ch.isspace() for ch in usuario_raw) or any(ch.isspace() for ch in clave_raw):
+            self.var_aviso.set("Acceso denegado: el usuario y la contrasena no pueden contener espacios.")
+            return
+
+        if usuario_raw == USUARIO_PREDEF and clave_raw == CLAVE_PREDEF:
+            self.autenticado = True
+            self.win.destroy()
+            return
+
+        self.intentos_restantes -= 1
+        if self.intentos_restantes <= 0:
+            messagebox.showerror("Acceso bloqueado", "Se agotaron los 3 intentos de acceso. El programa se cerrara.")
+            self.autenticado = False
+            self.win.destroy()
+            return
+
+        self.var_clave.set("")
+        self.var_aviso.set(
+            f"Credenciales incorrectas. Intentos restantes: {self.intentos_restantes}."
+        )
+        self.ent_clave.focus_set()
+
+    def _cancelar(self) -> None:
+        self.autenticado = False
+        self.win.destroy()
+
+    def solicitar_acceso(self) -> bool:
+        self.root.wait_window(self.win)
+        return self.autenticado
+
+
 class InterfazGraficaPERA:
     ARCHIVO_DATOS = "datos_pera.txt"
 
@@ -1509,7 +1637,19 @@ class InterfazGraficaPERA:
         ultima_ruta: Optional[ResultadoRuta],
         ruta_html: Path,
     ) -> Path:
-        mapa = folium.Map(location=[4.5709, -74.2973], zoom_start=6, tiles="OpenStreetMap")
+        mapa = folium.Map(location=[4.5709, -74.2973], zoom_start=6, tiles=None)
+        folium.TileLayer(
+            tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+            attr="Esri World Street Map",
+            name="Esri Calles Colombia",
+            control=True,
+        ).add_to(mapa)
+        folium.TileLayer(
+            tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+            attr="Esri World Topo Map",
+            name="Esri Topografico",
+            control=True,
+        ).add_to(mapa)
 
         rutas_destacadas = set(ultima_ruta.rutas_usadas) if (ultima_ruta and ultima_ruta.encontrada) else set()
 
@@ -1599,6 +1739,7 @@ class InterfazGraficaPERA:
         </div>
         """
         mapa.get_root().html.add_child(folium.Element(leyenda))
+        folium.LayerControl().add_to(mapa)
         mapa.save(str(ruta_html))
         return ruta_html
 
@@ -1647,6 +1788,12 @@ class InterfazGraficaPERA:
 
 def main() -> None:
     root = tk.Tk()
+    root.withdraw()
+    acceso = VentanaAccesoPERA(root)
+    if not acceso.solicitar_acceso():
+        root.destroy()
+        return
+    root.deiconify()
     InterfazGraficaPERA(root)
     root.mainloop()
 

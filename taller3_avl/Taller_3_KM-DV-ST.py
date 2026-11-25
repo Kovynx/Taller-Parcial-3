@@ -455,6 +455,21 @@ class InterfazGraficaPAA:
             font=("Segoe UI", 13, "bold"),
         ).pack(side=tk.LEFT, padx=16)
 
+        tk.Button(
+            barra_sup,
+            text="Salir",
+            bg="#C62828",
+            fg="#FFFFFF",
+            activebackground="#991B1B",
+            activeforeground="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Segoe UI", 10, "bold"),
+            padx=14,
+            pady=4,
+            cursor="hand2",
+            command=self._accion_salir,
+        ).pack(side=tk.RIGHT, padx=(4, 14), pady=10)
+
         self.lbl_resumen = tk.Label(
             barra_sup,
             text="Nodos: 0 | Activos: 0 | Altura: 0",
@@ -464,7 +479,7 @@ class InterfazGraficaPAA:
             padx=12,
             pady=4,
         )
-        self.lbl_resumen.pack(side=tk.RIGHT, padx=16, pady=10)
+        self.lbl_resumen.pack(side=tk.RIGHT, padx=(10, 6), pady=10)
 
         # Franja inferior fija: Recorridos SIEMPRE VISIBLES
         panel_recorridos = tk.Frame(self.root, bg="#1E293B", padx=14, pady=8)
@@ -618,23 +633,7 @@ class InterfazGraficaPAA:
             relief=tk.SOLID,
             state=tk.DISABLED,
         )
-        self.txt_traza.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 6))
-
-        btn_salir = tk.Button(
-            panel_izq,
-            text="Salir del Programa",
-            bg="#991B1B",
-            fg="#FFFFFF",
-            activebackground="#7F1D1D",
-            activeforeground="#FFFFFF",
-            relief=tk.FLAT,
-            font=("Segoe UI", 9, "bold"),
-            cursor="hand2",
-            pady=5,
-            command=self._accion_salir,
-        )
-        btn_salir.pack(fill=tk.X, padx=15, pady=(0, 8))
-        self.botones_accion.append(btn_salir)
+        self.txt_traza.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
 
         # Panel derecho: Estado actual + Lienzo grafico del arbol AVL
         panel_der = tk.Frame(cuerpo, bg="#FFFFFF", bd=1, relief=tk.SOLID)

@@ -12,5 +12,5 @@ fecha: 2026-11-25
 ## Cambios Agrupados
 - [x] **Calibración Real Colombia (`datos_pera.txt`):** Tarifas y distancias ajustadas a referencias reales CREG (~$16,200 COP/gal) e INVIAS/ANI Cat. I vigentes (32 capitales, 48 corredores, 5 capitales aisladas).
 - [x] **Fase 3 (`Parcial_3_KM-DV-ST.cpp` — 3A..3C):** 3 grafos ponderados sincronizados (`Distancia`, `Combustible`, `Peajes`), CRUD completo + desactivación (cierres viales, categoría, validación, grupos/investigadores/productos), Dijkstra 4 métricas con comparativa lado a lado, resumen estadístico descriptivo y validación dual C++11/C++17 Linux + Windows PE32+ estático.
-- [x] **Fase 4 (`Parcial_3_KM-DV-ST.py` — 4A..4C):** 3 grafos con paridad exacta con C++, calculadora Dijkstra en `tkinter`, CRUD completo, Dashboard `matplotlib` (2 histogramas + 2 diagramas de barras) y bono mapa interactivo `folium` (`mapa_pera_colombia.html`) verificados.
+- [x] **Fase 4 (`Parcial_3_KM-DV-ST.py` — 4A..4C + Login + CartoDB):** Ventana previa de acceso (`admin` / `pera2026`, validación estricta sin vacíos ni espacios en C++ y Python), 3 grafos, Dashboard `matplotlib` y mapa interactivo `folium` sobre tiles `CartoDB voyager` / `Esri` (sin bloqueo 403 en `file://`).
 - [ ] **Fase 5:** Informe IEEE 830 + 3 diagramas UML Parcial 3, script `empaquetar_entregas.py` y QA final en Windows 10.
