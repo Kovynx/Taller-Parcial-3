@@ -552,17 +552,317 @@ namespace PersistenciaAVL {
 } // namespace PersistenciaAVL
 
 // ============================================================================
-// PUNTO DE ENTRADA BASE (VERIFICACION DE MOTOR AVL Y PERSISTENCIA)
+// CAPA 4: INTERFAZ VISUAL CON GotoXY() Y RECORRIDOS SIEMPRE VISIBLES
+// ============================================================================
+class InterfazPAA {
+private:
+    ArbolAVL& arbol;
+    const std::string archivoDatos = "datos_avl.txt";
+    std::string estadoBanner;
+
+    static std::string recortarAncho(const std::string& texto, std::size_t maxLen) {
+        if (texto.size() <= maxLen) return texto;
+        if (maxLen <= 3) return texto.substr(0, maxLen);
+        return texto.substr(0, maxLen - 3) + "...";
+    }
+
+    static std::string formatoNodo(const NodoAVL* n, int fe) {
+        std::ostringstream oss;
+        if (n->activo) {
+            oss << "[" << n->clave << "|" << (fe > 0 ? "+" : "") << fe << "]";
+        } else {
+            oss << "(" << n->clave << "*)";
+        }
+        return oss.str();
+    }
+
+    void dibujarNodoRec(const NodoAVL* n, int x, int y, int offset, int nivel) const {
+        if (!n || nivel > 4) return;
+
+        std::string etiqueta = formatoNodo(n, arbol.obtenerFE(n));
+        int xInicio = std::max(1, std::min(118 - static_cast<int>(etiqueta.size()),
+                                           x - static_cast<int>(etiqueta.size()) / 2));
+        Consola::GotoXY(xInicio, y);
+        std::cout << etiqueta;
+
+        if (nivel == 4) return;
+
+        int nextOffset = std::max(3, offset / 2);
+        if (n->izq) {
+            int xHijo = std::max(3, x - offset);
+            int xRama = (x + xHijo) / 2;
+            Consola::GotoXY(xRama, y + 1);
+            std::cout << "/";
+            dibujarNodoRec(n->izq, xHijo, y + 2, nextOffset, nivel + 1);
+        }
+        if (n->der) {
+            int xHijo = std::min(115, x + offset);
+            int xRama = (x + xHijo) / 2;
+            Consola::GotoXY(xRama, y + 1);
+            std::cout << "\\";
+            dibujarNodoRec(n->der, xHijo, y + 2, nextOffset, nivel + 1);
+        }
+    }
+
+    void dibujarPantallaPrincipal(const std::string& avisoSuperior = "") const {
+        Consola::limpiarPantalla();
+
+        // Encabezado (Filas 0-2)
+        Consola::GotoXY(1, 0);
+        std::cout << "+====================================================================================================================+";
+        Consola::GotoXY(1, 1);
+        std::ostringstream titulo;
+        titulo << "| PAA - ARBOL BINARIO AVL (UPC) | Nodos: " << arbol.totalNodos()
+               << " (Activos: " << arbol.totalActivos() << ") | Altura: " << arbol.alturaTotal()
+               << " | Leyenda: [clave|FE] (inactivo*)";
+        std::string linTitulo = recortarAncho(titulo.str(), 116);
+        std::cout << linTitulo << std::string(117 - linTitulo.size(), ' ') << "|";
+        Consola::GotoXY(1, 2);
+        std::cout << "+====================================================================================================================+";
+
+        // Lienzo 2D del Arbol AVL (Filas 3-15)
+        if (!arbol.obtenerRaiz()) {
+            Consola::GotoXY(42, 8);
+            std::cout << "[ Arbol AVL vacio - Inserte o cargue nodos ]";
+        } else {
+            dibujarNodoRec(arbol.obtenerRaiz(), 59, 4, 28, 0);
+            if (arbol.alturaTotal() > 5) {
+                Consola::GotoXY(2, 15);
+                std::cout << "[Nota: Mostrando niveles 1-5 en lienzo 2D; use opcion 9 para ver el listado completo.]";
+            }
+        }
+
+        // Franja Media Fija: Recorridos SIEMPRE VISIBLES (Filas 16-20)
+        Consola::GotoXY(1, 16);
+        std::cout << "+--------------------------------------------------------------------------------------------------------------------+";
+        Consola::GotoXY(2, 17);
+        std::cout << "PRE-ORDEN : " << recortarAncho(arbol.formatearRecorrido(arbol.preOrden()), 103);
+        Consola::GotoXY(2, 18);
+        std::cout << "IN-ORDEN  : " << recortarAncho(arbol.formatearRecorrido(arbol.inOrden()), 103);
+        Consola::GotoXY(2, 19);
+        std::cout << "POST-ORDEN: " << recortarAncho(arbol.formatearRecorrido(arbol.postOrden()), 103);
+        Consola::GotoXY(1, 20);
+        std::cout << "+--------------------------------------------------------------------------------------------------------------------+";
+
+        // Panel de Traza Pedagogica de Ordenamiento y Balanceo (Filas 21-24)
+        const RegistroTraza& traza = arbol.obtenerUltimaTraza();
+        Consola::GotoXY(2, 21);
+        std::string cabeceraTraza = avisoSuperior.empty() ? ("ULTIMA OPERACION (" + traza.operacion + "): " + traza.mensajeFinal) : avisoSuperior;
+        std::cout << recortarAncho(cabeceraTraza, 115);
+
+        std::ostringstream rutaStr;
+        rutaStr << "TRAZA DE COMPARACION: ";
+        if (traza.pasos.empty()) {
+            rutaStr << "(sin pasos registrados)";
+        } else {
+            for (std::size_t i = 0; i < traza.pasos.size(); ++i) {
+                if (i > 0) rutaStr << " | ";
+                rutaStr << traza.pasos[i];
+            }
+        }
+        Consola::GotoXY(2, 22);
+        std::cout << recortarAncho(rutaStr.str(), 115);
+
+        Consola::GotoXY(2, 23);
+        if (!traza.rotaciones.empty()) {
+            std::cout << recortarAncho("BALANCEO APLICADO   : " + traza.rotaciones.back().detalle, 115);
+        } else if (!estadoBanner.empty()) {
+            std::cout << recortarAncho("ESTADO              : " + estadoBanner, 115);
+        } else {
+            std::cout << "BALANCEO APLICADO   : Sin rotaciones requeridas (|FE| <= 1 en todo el arbol).";
+        }
+        Consola::GotoXY(1, 24);
+        std::cout << "----------------------------------------------------------------------------------------------------------------------";
+    }
+
+    void dibujarMenu() const {
+        Consola::GotoXY(2, 25);
+        std::cout << "1) Insertar nodo      2) Eliminar nodo      3) Desactivar/Reactivar   4) Consultar (Buscar)   5) Modificar nodo";
+        Consola::GotoXY(2, 26);
+        std::cout << "6) Crear vacio        7) Cargar archivo     8) Guardar archivo        9) Detalle y Vars E/S   0) Salir";
+        Consola::GotoXY(2, 28);
+        std::cout << "Seleccione una opcion: ";
+    }
+
+    void pausarEn(int fila) const {
+        Consola::GotoXY(2, fila);
+        Consola::leerLinea("Presione ENTER para continuar...");
+    }
+
+    void mostrarDetalleYVariables() const {
+        Consola::limpiarPantalla();
+        std::cout << "======================================================================================\n";
+        std::cout << "  DETALLE DE NODOS DEL ARBOL AVL Y VARIABLES DE ENTRADA / SALIDA DEL MODELO\n";
+        std::cout << "======================================================================================\n\n";
+        std::cout << "[VARIABLES DE ENTRADA]\n";
+        std::cout << "  - opcionCargaInicial : Decision de cargar 'datos_avl.txt' o iniciar vacio.\n";
+        std::cout << "  - clave (int)        : Clave numerica unica de ordenamiento BST/AVL.\n";
+        std::cout << "  - etiqueta (string)  : Nombre o concepto asociado al nodo.\n";
+        std::cout << "  - activo (bool)      : Estado logico del registro (1=Activo, 0=Desactivado).\n\n";
+        std::cout << "[VARIABLES DE SALIDA]\n";
+        std::cout << "  - altura, FE         : Altura del subarbol y Factor de Equilibrio (h_izq - h_der).\n";
+        std::cout << "  - tipoRotacion       : Rotacion ejecutada (LL, RR, LR, RL) y traza de comparaciones.\n";
+        std::cout << "  - recorridos         : Pre-orden, In-orden y Post-orden visibles permanentemente.\n\n";
+        std::cout << "[LISTADO DE NODOS EN IN-ORDEN]\n";
+        std::cout << std::left << std::setw(10) << "CLAVE" << std::setw(26) << "ETIQUETA"
+                  << std::setw(10) << "ALTURA" << std::setw(8) << "FE" << "ESTADO\n";
+        std::cout << "----------------------------------------------------------------------\n";
+        auto lista = arbol.inOrden();
+        if (lista.empty()) {
+            std::cout << "(Arbol vacio)\n";
+        } else {
+            for (const NodoAVL* n : lista) {
+                std::cout << std::left << std::setw(10) << n->clave
+                          << std::setw(26) << n->etiqueta
+                          << std::setw(10) << n->altura
+                          << std::setw(8) << arbol.obtenerFE(n)
+                          << (n->activo ? "ACTIVO" : "DESACTIVADO") << "\n";
+            }
+        }
+        std::cout << "\n";
+        Consola::leerLinea("Presione ENTER para volver al arbol...");
+    }
+
+    void mostrarInicioPersistencia() {
+        Consola::limpiarPantalla();
+        std::cout << "+======================================================================+\n";
+        std::cout << "|   UNIVERSIDAD POPULAR DEL CESAR - PROGRAMA DE APRENDIZAJE DE ARBOLES |\n";
+        std::cout << "|                 ARBOL BINARIO AVL (C++17) - KM-DV-ST                 |\n";
+        std::cout << "+======================================================================+\n\n";
+        std::cout << "  1) Cargar datos iniciales desde '" << archivoDatos << "'\n";
+        std::cout << "  2) Ejecutar programa sin datos (arbol vacio)\n\n";
+        std::string op = Consola::leerLinea("Seleccione una opcion [1-2]: ");
+        if (op == "1") {
+            int cargados = 0;
+            if (PersistenciaAVL::cargarArchivo(arbol, archivoDatos, cargados)) {
+                estadoBanner = "Cargados " + std::to_string(cargados) + " nodos desde " + archivoDatos + ".";
+            } else {
+                estadoBanner = "No se encontro '" + archivoDatos + "'. Se inicio con arbol vacio.";
+            }
+        } else {
+            arbol.crearVacio();
+            estadoBanner = "Sesion iniciada sin datos (arbol vacio).";
+        }
+    }
+
+public:
+    explicit InterfazPAA(ArbolAVL& a) : arbol(a) {}
+
+    void ejecutar() {
+        mostrarInicioPersistencia();
+        bool ejecutando = true;
+
+        while (ejecutando) {
+            dibujarPantallaPrincipal();
+            dibujarMenu();
+
+            std::string opcion = Consola::leerLinea("");
+            estadoBanner.clear();
+
+            if (opcion == "1") {
+                int clave = 0;
+                Consola::GotoXY(2, 30);
+                if (!Consola::leerEntero("Ingrese clave numerica (entero): ", clave)) {
+                    estadoBanner = "Entrada invalida: debe digitar un numero entero.";
+                    continue;
+                }
+                Consola::GotoXY(2, 31);
+                std::string etq = Consola::leerLinea("Ingrese etiqueta (ENTER para 'Nodo_" + std::to_string(clave) + "'): ");
+                arbol.insertar(clave, etq, true);
+            } else if (opcion == "2") {
+                int clave = 0;
+                Consola::GotoXY(2, 30);
+                if (!Consola::leerEntero("Clave a eliminar fisicamente: ", clave)) {
+                    estadoBanner = "Entrada invalida: debe digitar un numero entero.";
+                    continue;
+                }
+                arbol.eliminar(clave);
+            } else if (opcion == "3") {
+                int clave = 0;
+                Consola::GotoXY(2, 30);
+                if (!Consola::leerEntero("Clave a desactivar o reactivar: ", clave)) {
+                    estadoBanner = "Entrada invalida.";
+                    continue;
+                }
+                NodoAVL* encontrado = arbol.buscar(clave);
+                if (encontrado) {
+                    arbol.cambiarEstadoActivo(clave, !encontrado->activo);
+                }
+            } else if (opcion == "4") {
+                int clave = 0;
+                Consola::GotoXY(2, 30);
+                if (!Consola::leerEntero("Clave a consultar: ", clave)) {
+                    estadoBanner = "Entrada invalida.";
+                    continue;
+                }
+                arbol.buscar(clave);
+            } else if (opcion == "5") {
+                int claveActual = 0;
+                Consola::GotoXY(2, 30);
+                if (!Consola::leerEntero("Clave actual a modificar: ", claveActual)) {
+                    estadoBanner = "Entrada invalida.";
+                    continue;
+                }
+                NodoAVL* nodo = arbol.buscar(claveActual);
+                if (!nodo) continue;
+
+                Consola::GotoXY(2, 31);
+                std::string nuevaClaveStr = Consola::leerLinea(
+                    "Nueva clave (ENTER para mantener " + std::to_string(claveActual) + "): ");
+                int nuevaClave = claveActual;
+                if (!nuevaClaveStr.empty()) {
+                    try {
+                        nuevaClave = std::stoi(nuevaClaveStr);
+                    } catch (...) {
+                        estadoBanner = "Nueva clave invalida.";
+                        continue;
+                    }
+                }
+                Consola::GotoXY(2, 32);
+                std::string nuevaEtq = Consola::leerLinea("Nueva etiqueta (ENTER para mantener '" + nodo->etiqueta + "'): ");
+                arbol.modificar(claveActual, nuevaClave, nuevaEtq);
+            } else if (opcion == "6") {
+                arbol.crearVacio();
+            } else if (opcion == "7") {
+                int cargados = 0;
+                if (PersistenciaAVL::cargarArchivo(arbol, archivoDatos, cargados)) {
+                    estadoBanner = "Recargados " + std::to_string(cargados) + " nodos desde " + archivoDatos + ".";
+                } else {
+                    estadoBanner = "No se pudo abrir '" + archivoDatos + "'.";
+                }
+            } else if (opcion == "8") {
+                if (PersistenciaAVL::guardarArchivo(arbol, archivoDatos)) {
+                    estadoBanner = "Arbol guardado correctamente en '" + archivoDatos + "'.";
+                } else {
+                    estadoBanner = "Error al guardar en '" + archivoDatos + "'.";
+                }
+            } else if (opcion == "9") {
+                mostrarDetalleYVariables();
+            } else if (opcion == "0") {
+                Consola::GotoXY(2, 30);
+                std::string resp = Consola::leerLinea("Desea guardar los cambios antes de salir? (s/n): ");
+                if (resp == "s" || resp == "S") {
+                    PersistenciaAVL::guardarArchivo(arbol, archivoDatos);
+                }
+                ejecutando = false;
+            } else {
+                estadoBanner = "Opcion no reconocida. Seleccione entre 0 y 9.";
+            }
+        }
+
+        Consola::limpiarPantalla();
+        std::cout << "Sesion finalizada. Gracias por usar el Programa de Aprendizaje de Arboles (PAA).\n";
+        Consola::leerLinea("Presione ENTER para cerrar...");
+    }
+};
+
+// ============================================================================
+// PUNTO DE ENTRADA PRINCIPAL
 // ============================================================================
 int main() {
     Consola::inicializar();
     ArbolAVL arbol;
-    int cargados = 0;
-    if (PersistenciaAVL::cargarArchivo(arbol, "datos_avl.txt", cargados)) {
-        std::cout << "Cargados " << cargados << " nodos desde datos_avl.txt\n";
-    }
-    std::cout << "Pre-orden : " << arbol.formatearRecorrido(arbol.preOrden()) << "\n";
-    std::cout << "In-orden  : " << arbol.formatearRecorrido(arbol.inOrden()) << "\n";
-    std::cout << "Post-orden: " << arbol.formatearRecorrido(arbol.postOrden()) << "\n";
+    InterfazPAA interfaz(arbol);
+    interfaz.ejecutar();
     return 0;
 }
