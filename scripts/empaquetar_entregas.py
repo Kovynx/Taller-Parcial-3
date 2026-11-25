@@ -169,8 +169,8 @@ def build_zip(base_dir: Path, required: list, zip_path: Path) -> None:
                 sys.exit(1)
 
 
-def process_group(grupo: str) -> None:
-    print(f"=== Empaquetado Grupo {grupo} ===")
+def process_group(iniciales: str) -> None:
+    print(f"=== Empaquetado Entregas ({iniciales}) ===")
 
     # Taller 3
     print("-- Taller 3 --")
@@ -186,7 +186,7 @@ def process_group(grupo: str) -> None:
     print("Auditando entregables (Taller)...")
     for rel in TALLER_REQUIRED:
         audit_file(TALLER_DIR / rel, "taller3")
-    zip_t = ROOT / f"Taller_3_Grupo_{grupo}.zip"
+    zip_t = ROOT / f"Taller_3_{iniciales}.zip"
     print(f"Creando {zip_t.name}...")
     build_zip(TALLER_DIR, TALLER_REQUIRED, zip_t)
 
@@ -204,7 +204,7 @@ def process_group(grupo: str) -> None:
     print("Auditando entregables (Parcial)...")
     for rel in PERA_REQUIRED:
         audit_file(PERA_DIR / rel, "parcial3")
-    zip_p = ROOT / f"Parcial_3_Grupo_{grupo}.zip"
+    zip_p = ROOT / f"Parcial_3_{iniciales}.zip"
     print(f"Creando {zip_p.name}...")
     build_zip(PERA_DIR, PERA_REQUIRED, zip_p)
 
@@ -213,9 +213,9 @@ def process_group(grupo: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--grupo", default="05")
+    parser.add_argument("--iniciales", default="KM-DV-ST")
     args = parser.parse_args()
-    process_group(args.grupo)
+    process_group(args.iniciales)
 
 
 if __name__ == "__main__":

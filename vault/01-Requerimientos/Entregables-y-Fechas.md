@@ -11,9 +11,9 @@ correo: adithperez@unicesar.edu.co
 > Correo destino: `adithperez@unicesar.edu.co`
 
 ## Empaquetado (Dos `.zip` Independientes)
-- Se deben generar y enviar **2 archivos `.zip` completamente separados**:
-  1. `Taller_3_Grupo_05.zip` (con asunto de Taller 3).
-  2. `Parcial_3_Grupo_05.zip` (con asunto de Parcial 3).
+- Se deben generar y enviar **2 archivos `.zip` completamente separados** nombrados con las iniciales del equipo:
+  1. `Taller_3_KM-DV-ST.zip` (con asunto de Taller 3).
+  2. `Parcial_3_KM-DV-ST.zip` (con asunto de Parcial 3).
 
 ## Plantilla Oficial de Requerimientos (Enlace Extraído del PDF)
 - `https://unicesareduco-my.sharepoint.com/:w:/g/personal/adithperez_unicesar_edu_co/IQAhO93UkpNjSIx8nGwWnZoRAfgPdmmyZQ3Y-LBVNTP6LO8?e=sQCvja`
