@@ -15,7 +15,7 @@ ultima_actualizacion: 2026-11-25
 Implementación en Python del Programa de Aprendizaje de Árboles (PAA) para enseñar árboles binarios AVL de forma visual, mostrando ordenamiento, balanceo (rotaciones LL, RR, LR, RL) y recorridos siempre visibles.
 
 ## Archivos Exactos (Actualizar al crear)
-- *(Pendiente: definir ruta exacta con iniciales de los estudiantes, ej. `taller3/python/<Iniciales>.py`)*
+- `taller3_avl/Taller_3_KM-DV-ST.py` — Implementación principal Python `tkinter` (pendiente de creación).
 
 ## Símbolos / Estructuras Clave
 - *(Pendiente de definición en etapa de desarrollo)*

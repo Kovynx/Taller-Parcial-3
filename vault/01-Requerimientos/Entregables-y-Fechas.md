@@ -23,8 +23,16 @@ correo: adithperez@unicesar.edu.co
 - **Parcial 3:** `Estructura de datos Parcial 3 Grupo # 2026-2`
 *(Reemplazar `#` por el número de grupo correspondiente).*
 
+## Integrantes del Grupo e Iniciales Oficiales (`KM-DV-ST`)
+1. **Kovyn Been Mena Orcasita** (`KM`) — `kbmena@unicesar.edu.co`
+2. **Damian Jose Velasquez Gonzalez** (`DV`)
+3. **Sofia Isabel Tovar Rodriguez** (`ST`)
+*(Completar cédulas/códigos y correos institucionales faltantes en `Identificacion_Estudiantes.txt` y el número de `Grupo #` del asunto del correo).*
+
 ## Reglas de Nombrado de Archivos Fuente
-- Los archivos fuente deben llevar por nombre las **iniciales de los 3 estudiantes** (ej. `AB-PO.py`, `Parcial_3_AP.cpp` / `Taller_3.cpp`, `Taller_3.py` según convención del grupo con iniciales).
+- **Iniciales oficiales:** `KM-DV-ST`
+- **Taller 3 (AVL):** `Taller_3_KM-DV-ST.cpp` y `Taller_3_KM-DV-ST.py`
+- **Parcial 3 (PERA Grafos):** `Parcial_3_KM-DV-ST.cpp` y `Parcial_3_KM-DV-ST.py`
 - Para cada proyecto se entregan **2 archivos fuente** (uno en C/C++ y uno en Python).
 
 ## Lista de Entregables por Cada Proyecto (Taller 3 y Parcial 3)

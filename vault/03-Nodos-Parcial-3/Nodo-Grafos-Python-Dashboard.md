@@ -16,7 +16,7 @@ ultima_actualizacion: 2026-11-25
 Implementación en Python del Programa Estadístico de Rutas de Automóviles (PERA): gestión de grafos (rutas, peajes, distancias, costos), cálculo de tiempo/distancia/combustible/peajes entre dos ciudades, y **DASHBOARD** con información estadística, histogramas, diagramas de barras y bono de mapa con **Folium**.
 
 ## Archivos Exactos (Actualizar al crear)
-- *(Pendiente: definir ruta exacta con iniciales de los estudiantes, ej. `parcial3/python/<Iniciales>.py`)*
+- `parcial3_pera/Parcial_3_KM-DV-ST.py` — Implementación principal Python `tkinter` + `matplotlib` + `folium` (pendiente de creación).
 
 ## Símbolos / Estructuras Clave
 - *(Pendiente de definición en etapa de desarrollo)*

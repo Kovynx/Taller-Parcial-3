@@ -16,7 +16,7 @@ ultima_actualizacion: 2026-11-25
 Implementación en C/C++ del Programa Estadístico de Rutas de Automóviles (PERA) con estructura de grafos para rutas entre capitales de Colombia, cálculo de costos (tiempo, distancia, combustible, peajes) entre dos ciudades y estadísticas en tipo **resumen de datos**.
 
 ## Archivos Exactos (Actualizar al crear)
-- *(Pendiente: definir ruta exacta con iniciales de los estudiantes, ej. `parcial3/cpp/<Iniciales>.cpp`)*
+- `parcial3_pera/Parcial_3_KM-DV-ST.cpp` — Implementación principal C++17 (pendiente de creación).
 
 ## Símbolos / Estructuras Clave
 - *(Pendiente de definición en etapa de desarrollo)*

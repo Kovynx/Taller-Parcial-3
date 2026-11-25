@@ -16,7 +16,7 @@ Implementación en C/C++ del Programa de Aprendizaje de Árboles (PAA) para ense
 
 ## Archivos Exactos (Actualizar al crear)
 - `tests_compatibilidad/prueba_win_linux.cpp` — Base validada de `Consola::GotoXY()`, `Consola::limpiarPantalla()`, `rutaJuntoAlEjecutable()` y lectura `CRLF`-safe (compilada limpio en `g++` Linux y `x86_64-w64-mingw32-g++ -static` Windows PE32+ `1.1 MB` sin DLLs externas).
-- *(Pendiente: definir ruta exacta con iniciales de los estudiantes, ej. `taller3_avl/<Iniciales>.cpp`)*
+- `taller3_avl/Taller_3_KM-DV-ST.cpp` — Implementación principal C++17 (pendiente de creación).
 
 ## Símbolos / Estructuras Clave
 - *(Pendiente de definición en etapa de desarrollo)*
