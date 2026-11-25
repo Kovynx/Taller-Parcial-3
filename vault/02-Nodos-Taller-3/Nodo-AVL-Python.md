@@ -1,8 +1,9 @@
 ---
 tipo: nodo
 proyecto: Taller 3 (PAA - Árboles AVL)
-estado: pendiente
-archivos: []
+estado: completado
+archivos:
+  - taller3_avl/Taller_3_KM-DV-ST.py
 dependencias:
   - "[[Taller-3-PAA-AVL]]"
   - "[[Nodo-Persistencia-AVL]]"
@@ -12,13 +13,16 @@ ultima_actualizacion: 2026-11-25
 # Nodo — AVL en Python
 
 ## Propósito
-Implementación en Python del Programa de Aprendizaje de Árboles (PAA) para enseñar árboles binarios AVL de forma visual, mostrando ordenamiento, balanceo (rotaciones LL, RR, LR, RL) y recorridos siempre visibles.
+Implementación en Python 3 (`tkinter`, cero dependencias externas) del Programa de Aprendizaje de Árboles (PAA) para enseñar árboles binarios AVL de forma visual, mostrando ordenamiento, balanceo (rotaciones LL, RR, LR, RL) y recorridos siempre visibles.
 
-## Archivos Exactos (Actualizar al crear)
-- `taller3_avl/Taller_3_KM-DV-ST.py` — Implementación principal Python `tkinter` (pendiente de creación).
+## Archivos Exactos
+- `taller3_avl/Taller_3_KM-DV-ST.py` — Implementación autocontenida en 4 capas (compatible con Python 3.8+ en Windows y Linux sin `pip install`).
 
 ## Símbolos / Estructuras Clave
-- *(Pendiente de definición en etapa de desarrollo)*
+- `NodoAVL`, `EventoBalanceo`, `RegistroTraza`
+- `ArbolAVL`: `insertar`, `eliminar`, `buscar`, `cambiar_estado_activo`, `modificar`, `crear_vacio`, `pre_orden`, `in_orden`, `post_orden`
+- `PersistenciaAVL`: `resolver_ruta`, `cargar`, `guardar`
+- `InterfazGraficaPAA`: `_dibujar_arbol`, `_iniciar_demo`, `_ejecutar_paso_demo`, `_mostrar_variables_modelo`
 
 ## Entradas y Salidas
 - **Entradas:** Decisión de cargar persistencia o iniciar vacío; datos para crear, insertar, eliminar, desactivar, consultar y modificar nodos.
