@@ -3,7 +3,7 @@ tipo: plan-desarrollo
 proyecto: Taller 3 (AVL) + Parcial 3 (Grafos PERA)
 fecha_creacion: 2026-11-25
 fecha_limite: 2026-12-01T11:59:00-05:00
-estado: en-revision-arquitectura
+estado: aprobado-en-ejecucion
 ---
 
 # Análisis Riguroso y Plan Maestro de Desarrollo (Taller 3 & Parcial 3)
@@ -163,77 +163,142 @@ Para garantizar **cero retrasos y cero fallos de ejecución en Windows**:
 
 ```text
 Taller-Parcial 3/
-├── vault/                          # Bóveda Obsidian (Nodos + MOCs + Bitácora)
-├── .agents/skills/                 # Skills de contexto y navegación
-├── taller3_avl/                    # Trabajo del Taller 3 -> genera Taller_3_Grupo_X.zip
-│   ├── <Iniciales>.cpp             # C++17 AVL visual con GotoXY()
-│   ├── <Iniciales>.py              # Python tkinter AVL visual interactivo
-│   ├── datos_avl.txt               # Persistencia compartida (carga opcional al inicio)
+├── vault/                             # Bóveda Obsidian (NO entra en los .zip)
+├── .agents/skills/                    # Skills de contexto (NO entra en los .zip)
+├── tests_compatibilidad/              # Pruebas de humo Win/Linux (NO entra en los .zip)
+├── taller3_avl/                       # Trabajo del Taller 3 -> Taller_3_Grupo_#.zip
+│   ├── Taller_3_KM-DV-ST.cpp          # C++17 AVL visual con GotoXY() (120x34 seguro)
+│   ├── Taller_3_KM-DV-ST.py           # Python tkinter AVL visual interactivo
+│   ├── datos_avl.txt                  # Persistencia compartida (; CRLF-safe)
 │   ├── Identificacion_Estudiantes.txt
-│   └── docs/                       # Generador + Especificacion_Tecnica_Taller_3.docx + UML
-├── parcial3_pera/                  # Trabajo del Parcial 3 -> genera Parcial_3_Grupo_X.zip
-│   ├── <Iniciales>.cpp             # C++17 3 Grafos Colombia + Dijkstra + Resumen
-│   ├── <Iniciales>.py              # Python 3 Grafos + Dashboard Matplotlib + Bono Folium
-│   ├── datos_pera.txt              # Persistencia real Colombia (32 capitales + peajes)
+│   └── docs/                          # Especificacion_Tecnica_Taller_3.docx + 3 UML PNG
+├── parcial3_pera/                     # Trabajo del Parcial 3 -> Parcial_3_Grupo_#.zip
+│   ├── Parcial_3_KM-DV-ST.cpp         # C++17 3 Grafos Colombia + Dijkstra + Resumen
+│   ├── Parcial_3_KM-DV-ST.py          # Python 3 Grafos + Dashboard Matplotlib + Bono Folium
+│   ├── datos_pera.txt                 # Persistencia real Colombia (32 capitales + peajes)
 │   ├── Identificacion_Estudiantes.txt
-│   └── docs/                       # Generador + Especificacion_Tecnica_Parcial_3.docx + UML
+│   └── docs/                          # Especificacion_Tecnica_Parcial_3.docx + 3 UML PNG
 └── scripts/
-    └── empaquetar_entregas.py      # Valida checklist, compila los .cpp con g++ y crea los 2 .zip limpios
+    └── empaquetar_entregas.py         # Compila Linux+Win, audita limpieza anti-IA y crea los 2 .zip
 ```
 
-### 5.1 Lógica de Validación en `empaquetar_entregas.py`
+### 5.1 Lógica de Validación y Auditoría Industrial en `empaquetar_entregas.py`
 
-Antes de empaquetar cada `.zip`, el script ejecuta los pasos siguientes en orden. Si cualquier paso falla, aborta con un mensaje claro e indica qué corregir.
+Antes de empaquetar cada `.zip`, el script ejecuta las validaciones en orden y **aborta** si cualquiera falla:
 
-```python
-import subprocess, zipfile, os, sys
-
-def validar_compilacion_cpp(ruta_cpp: str) -> None:
-    """Compila el .cpp con g++ -std=c++17 -Wall -Wextra.
-    Aborta el empaquetado si hay errores de compilación."""
-    resultado = subprocess.run(
-        ["g++", "-std=c++17", "-Wall", "-Wextra", "-o", os.devnull, ruta_cpp],
-        capture_output=True, text=True
-    )
-    if resultado.returncode != 0:
-        print(f"\n❌ ERROR DE COMPILACIÓN en {ruta_cpp}:\n{resultado.stderr}")
-        sys.exit(1)
-    if resultado.stderr:          # Warnings no bloquean, pero se muestran
-        print(f"⚠️  Warnings en {ruta_cpp}:\n{resultado.stderr}")
-    print(f"✅ Compilación OK: {ruta_cpp}")
-
-# Checklist completo por proyecto antes de crear el .zip:
-# 1. validar_compilacion_cpp("<Iniciales>.cpp")     ← NUEVO (sugerencia E)
-# 2. Verificar existencia de: .cpp, .py, datos_*.txt,
-#    Identificacion_Estudiantes.txt, Especificacion_Tecnica_*.docx
-# 3. Verificar que el .docx contiene los diagramas UML (tamaño > 50 KB)
-# 4. Verificar que el .txt de identificación no está vacío
-# 5. Crear el .zip con nombre exacto del asunto del correo
-```
-
-**Notas de implementación:**
-- `g++` debe estar en el `PATH` (en Linux siempre lo está; en Windows usar el MinGW-w64 instalado en el Paso 3 del checklist OptiOS).
-- Compilar contra `/dev/null` (`os.devnull`) en Linux o `NUL` en Windows: `subprocess` en Python resuelve `os.devnull` correctamente en ambos SO.
-- Si se quiere cruzar-compilar desde Linux para verificar el `.exe` de Windows, reemplazar `g++` por `x86_64-w64-mingw32-g++` como paso adicional opcional.
+1. **`validar_compilacion_cpp(ruta_cpp)` (Doble compilación real):**
+   - Compila con `g++ -std=c++17 -Wall -Wextra -Werror` (Linux).
+   - Si `x86_64-w64-mingw32-g++` está instalado, compila también con `-std=c++17 -Wall -Wextra -Werror -static -static-libgcc -static-libstdc++` hacia un `.exe` temporal (verificando el bloque `#ifdef _WIN32` y `<windows.h>` sin incluir binarios en el `.zip`).
+2. **`validar_sintaxis_python(ruta_py)`:**
+   - Ejecuta `py_compile` para garantizar 0 errores de sintaxis en los `.py`.
+3. **`auditar_limpieza_industrial(archivos_entregables)`:**
+   - Escanea todos los `.cpp`, `.py`, `.txt` y el XML de los `.docx` para confirmar **cero rastros de IA ni plantillas** (`TODO`, `FIXME`, `MACROBUTTON`, `Inserte aquí`, `pon esto`, `acá haremos`, `Sugerencia`, nombres de modelos/agentes o placeholders `<...>`).
+4. **Checklist de completitud y aislamiento:**
+   - Verifica existencia y tamaño válido de `.cpp`, `.py`, `datos_*.txt`, `Identificacion_Estudiantes.txt` y `Especificacion_Tecnica_*.docx` (> 50 KB con diagramas UML).
+   - Empaqueta **solo los entregables limpios** (excluyendo `vault/`, `.agents/`, `AGENTS.md`, `tests_compatibilidad/`, `.git/` y binarios compilados).
 
 ---
 
-## 6. Cronograma Táctico de 6 Días (25 Nov -> 1 Dic 11:59 AM)
+## 6. Plan de Ejecución Continuo por Fases y Subfases Atómicas
 
-| Día | Fecha | Meta Concreta | Nodos de la Vault |
-| :--- | :--- | :--- | :--- |
-| **Día 1** | Mié 25 Nov | Cierre de arquitectura (Carbon + Kiro + Claude) + Dataset real de Colombia (32 capitales, corredores y peajes) + Persistencia base. | `Nodo-Datos-Colombia-Peajes`, `Nodo-Persistencia-*` |
-| **Día 2** | Jue 26 Nov | **Taller 3 completo en código:** `<Iniciales>.cpp` (`GotoXY` + rotaciones AVL + recorridos fijos) y `<Iniciales>.py` (`tkinter` visual). | `Nodo-AVL-CPP`, `Nodo-AVL-Python` |
-| **Día 3** | Vie 27 Nov | **Parcial 3 en C++:** 3 grafos, CRUD + desactivación, Dijkstra 4 métricas y resumen estadístico descriptivo. | `Nodo-Grafos-CPP` |
-| **Día 4** | Sáb 28 Nov | **Parcial 3 en Python:** 3 grafos + Dashboard (`matplotlib` histogramas/barras) + **Bono Mapa Folium** interactivo. | `Nodo-Grafos-Python-Dashboard` |
-| **Día 5** | Dom 29 Nov | **Prueba real en OptiOS 10 22H2** + Generación de los 2 `.docx` con Plantilla UPC y diagramas UML (Casos de Uso, Secuencia, Estados). | `Nodo-Docs-UML-Taller-3`, `Nodo-Docs-UML-Parcial-3` |
-| **Día 6** | Lun 30 Nov | **Grabación y subida a YouTube de los 2 videos (~10 min c/u)** + Empaquetado de los 2 `.zip` (dejando margen de seguridad antes del Mar 1 Dic 11:59 AM). | `Entregables-y-Fechas` |
+> **Regla de ritmo continuo:** Las fases **NO están atadas a días calendario**. En cuanto se completa, verifica y commitea una subfase, se avanza inmediatamente a la siguiente. La fecha límite absoluta sigue siendo **Martes 1 de Diciembre de 2026 — 11:59 AM**.
+> **Regla Git:** Cada subfase cierra con su propio **commit pequeño y atómico** + actualización del nodo afectado en `vault/` y `Registro-Cambios.md`.
+
+### Fase 0 — Preparación de Entorno, Validación Temprana y Esquemas de Datos
+- **0A — Entorno CachyOS y Smoke-Test Windows:**
+  - Verificar en CachyOS `tk`, `libreoffice-fresh` y `.venv` (`matplotlib`, `folium`, `python-docx`, `pillow`).
+  - Confirmar en Windows real (OptiOS 10 o PC de compañero) la ejecución de `tests_compatibilidad/prueba_win.exe` + `datos_prueba.txt`.
+  - *Responsable:* Tú (CachyOS) + Damian/Sofia (prueba rápida en Windows).
+- **0B — Esquemas de Persistencia y Dataset Base:**
+  - Crear `taller3_avl/datos_avl.txt` (dataset pedagógico de ~10 nodos en formato `clave;etiqueta;activo`).
+  - Crear `parcial3_pera/datos_pera.txt` con las **32 capitales de Colombia** (lat/lon reales) + **~50 corredores troncales reales** (distancia km, tiempo h, combustible COP, cantidad/costo de peajes COP, categoría vial, validado, activo) y bloque de grupos/investigadores viales.
+  - *Commit:* `data(persistencia): crear archivos base datos_avl.txt y datos_pera.txt Colombia`
+  - *En paralelo (Damian / Sofia):* Auditar distancias y peajes de `datos_pera.txt` con INVIAS/ANI y consolidar cédulas/códigos/correos para `Identificacion_Estudiantes.txt`.
+
+### Fase 1 — Taller 3 (PAA): Implementación C++17 (`taller3_avl/Taller_3_KM-DV-ST.cpp`)
+- **1A — Capa Modelo, Motor AVL y Persistencia:**
+  - Implementar `NodoAVL`, alturas, factor de equilibrio $FE$, 4 rotaciones (`LL`, `RR`, `LR`, `RL`) con bitácora de traza pedagógica (comparaciones + estado antes/después), CRUD completo (crear, insertar, eliminar 0/1/2 hijos, desactivar/reactivar, consultar, modificar etiqueta o clave con rebalanceo), recorridos Pre/In/Post-orden y carga/guardado `;` (`CRLF`-safe, opción inicial cargar o iniciar vacío).
+  - *Commit:* `feat(taller3-cpp): implementar motor AVL, operaciones CRUD y persistencia`
+- **1B — Capa Vista `GotoXY()` Segura (`120x34`) y Recorridos Fijos:**
+  - Integrar la capa `Consola` validada con redimensionamiento seguro en `_WIN32` (`SetConsoleScreenBufferSize` / `SetConsoleWindowInfo` a `120x34` para evitar desbordes en `cmd.exe` de 80 columnas) y tope limpio de profundidad visual 2D (niveles 0–4 + resumen si supera).
+  - Franja central fija con **Pre-orden, In-orden y Post-orden siempre visibles** + panel de traza de rotaciones.
+  - *Commit:* `feat(taller3-cpp): agregar interfaz GotoXY 120x34 y panel fijo de recorridos`
+- **1C — Modo Demo Pedagógico (7 pasos) y Verificación Dual Linux/Windows:**
+  - Implementar opción `D) Demo pedagogico` con la secuencia exacta `10, 20, 30, 5, 3, 8, 25` (`RR → LL → LR → RL` terminando en árbol simétrico perfecto).
+  - Compilar y validar en `g++` (Linux) + `x86_64-w64-mingw32-g++ -static` (Windows PE32+ sin warnings).
+  - *Commit:* `feat(taller3-cpp): agregar demo pedagogico de 4 rotaciones y validar compilacion dual`
+
+### Fase 2 — Taller 3 (PAA): Python Visual y Cierre Documental Taller 3
+- **2A — Motor AVL y Persistencia Compartida en Python (`taller3_avl/Taller_3_KM-DV-ST.py`):**
+  - Implementar exactamente el mismo modelo AVL, operaciones CRUD + desactivación, traza de rotaciones y persistencia compartida `datos_avl.txt` (con selector inicial cargar/vacío).
+  - *Commit:* `feat(taller3-py): implementar motor AVL y persistencia compartida`
+- **2B — Interfaz Visual `tkinter` + Demo Animado:**
+  - Canvas 2D vectorial coloreado por $FE$, panel fijo inferior con **Pre-orden, In-orden y Post-orden siempre visibles**, panel de operaciones y botón `Demo Pedagogico` (`10, 20, 30, 5, 3, 8, 25`) animado con `root.after()` sin bloquear la UI. Cero dependencias externas.
+  - *Commit:* `feat(taller3-py): agregar interfaz grafica tkinter y demo animado de rotaciones`
+- **2C — Documentación IEEE 830 + 3 Diagramas UML del Taller 3 (Adelantada para evitar cuello de botella):**
+  - Generar los 3 diagramas UML en PNG alta resolución (Casos de Uso, Secuencia de inserción/rebalanceo, Estados del nodo AVL).
+  - Generar `taller3_avl/Especificacion_Tecnica_Taller_3.docx` basado en la estructura de `plantilla_formato.doc` (sin textos guía azules ni `MACROBUTTON`, con variables de entrada/salida en `3.1` y fichas `RF` en `3.2`) + `Identificacion_Estudiantes.txt`.
+  - *Commit:* `docs(taller3): generar informe IEEE 830, 3 diagramas UML e identificacion`
+  - *En paralelo (Damian / Sofia en Windows):* Probar `Taller_3_KM-DV-ST.cpp` en Dev-C++ (`F11`) y `.py` en Windows, tomar capturas reales, insertarlas en el `.docx` en MS Word y actualizar la Tabla de Contenido.
+
+### Fase 3 — Parcial 3 (PERA): Implementación C++17 (`parcial3_pera/Parcial_3_KM-DV-ST.cpp`)
+- **3A — Modelo, 3 Grafos Ponderados y Persistencia Real de Colombia:**
+  - Implementar `GrafoPonderado` reutilizable (lista de adyacencia) instanciado en **3 grafos sincronizados**: `GrafoDistancia`, `GrafoCombustible` y `GrafoPeajes`, bajo `GestorPERA`.
+  - Carga opcional al inicio desde `datos_pera.txt` (`CRLF`-safe).
+  - *Commit:* `feat(parcial3-cpp): implementar 3 grafos ponderados sincronizados y persistencia`
+- **3B — CRUD Completo, Desactivación y Cobertura del Punto 5:**
+  - Ingresar, eliminar, desactivar/reactivar y modificar cualquier ciudad, tramo/peaje (incluyendo `categoria` y `validado`) y el submódulo de grupos/investigadores y productos técnicos viales.
+  - *Commit:* `feat(parcial3-cpp): agregar CRUD completo, desactivacion y gestion de entidades viales`
+- **3C — Motor Dijkstra (4 Métricas), Resumen Descriptivo y Compilación Dual:**
+  - Dijkstra con `std::priority_queue` $O((V+E)\log V)$ seleccionando criterio (distancia, combustible, peajes o costo total), ignorando nodos/tramos desactivados (simulación de cierre vial) y mostrando desglose completo: **tiempo, distancia, combustible y peajes** + detección de capitales aisladas (San Andrés, Leticia, Mitú, Inírida).
+  - Módulo de estadísticas descriptivas en consola ($n$, media, mediana, desv. estándar, mín, máx, grados/hubs).
+  - Validar compilación dual `g++` + `x86_64-w64-mingw32-g++ -static`.
+  - *Commit:* `feat(parcial3-cpp): agregar Dijkstra 4 metricas, estadisticas descriptivas y validacion dual`
+
+### Fase 4 — Parcial 3 (PERA): Python Dashboard y Bono Mapa Folium (`parcial3_pera/Parcial_3_KM-DV-ST.py`)
+- **4A — Motor de 3 Grafos, Dijkstra y Persistencia Compartida:**
+  - Implementar los 3 grafos, Dijkstra 4 métricas, CRUD completo + desactivación y carga/guardado de `datos_pera.txt` (compatible 100% con C++).
+  - *Commit:* `feat(parcial3-py): implementar motor de 3 grafos, Dijkstra y persistencia compartida`
+- **4B — Interfaz `tkinter` (Calculadora de Rutas y Gestión CRUD):**
+  - Ventana principal con pestañas para consulta de rutas óptimas entre 2 ciudades, gestión CRUD de ciudades/tramos/peajes/entidades y carga opcional al inicio.
+  - *Commit:* `feat(parcial3-py): construir interfaz tkinter de calculadora de rutas y gestion CRUD`
+- **4C — Dashboard Estadístico (`matplotlib`) + Bono Mapa Interactivo (`folium`):**
+  - Pestaña Dashboard con KPIs, **histogramas** (distancias y peajes) y **diagramas de barras** (top capitales por grado y comparativa combustible vs peajes) embebidos en `tkinter` con protección `try/except ImportError` amigable.
+  - Botón Bono que genera `mapa_pera_colombia.html` con `folium` (32 capitales, tramos activos/inactivos con popups y ruta óptima resaltada) y lo abre en el navegador.
+  - *Commit:* `feat(parcial3-py): agregar dashboard matplotlib y bono de mapa interactivo folium`
+
+### Fase 5 — Cierre Documental Parcial 3, Empaquetador Automático y QA Windows
+- **5A — Documentación IEEE 830 + 3 Diagramas UML del Parcial 3:**
+  - Generar los 3 diagramas UML en PNG alta resolución (Casos de Uso, Secuencia de cálculo Dijkstra/Dashboard, Estado de tramos/sistema PERA).
+  - Generar `parcial3_pera/Especificacion_Tecnica_Parcial_3.docx` bajo estándar IEEE 830 (`plantilla_formato.doc`) + `Identificacion_Estudiantes.txt`.
+  - *Commit:* `docs(parcial3): generar informe IEEE 830, 3 diagramas UML e identificacion`
+- **5B — Script de Validación, Auditoría Anti-IA y Empaquetado (`scripts/empaquetar_entregas.py`):**
+  - Implementar doble compilación C++, validación Python, auditoría anti-rastros de IA/plantillas y generación de los **2 `.zip` independientes** (`Taller_3_Grupo_#.zip` y `Parcial_3_Grupo_#.zip`).
+  - *Commit:* `chore(entrega): crear script de validacion, auditoria industrial y empaquetado zip`
+- **5C — QA Nativo en OptiOS 10 22H2 / Windows de Compañeros:**
+  - Compilar y ejecutar ambos `.cpp` con `F11` en Dev-C++ y correr ambos `.py` en Windows real.
+  - Insertar capturas finales en ambos `.docx` en MS Word y actualizar sus Tablas de Contenido.
+  - *Commit:* `docs(entrega): incorporar capturas reales de Windows y cerrar documentos finales`
+
+### Fase 6 — Grabación de Videos y Envío Oficial
+- **6A — Grabación y Subida de Videos (~10 min c/u en YouTube):**
+  - Reparto por capas entre Kovyn, Damian y Sofia, identidad institucional UPC y **los 3 visibles en cámara todo el tiempo**.
+  - Registrar enlaces finales de YouTube en `Identificacion_Estudiantes.txt` de cada entrega.
+  - *Commit:* `docs(entrega): registrar enlaces de videos YouTube y verificar paquetes zip`
+- **6B — Envío por Correo a `adithperez@unicesar.edu.co` (antes del Mar 1 Dic 11:59 AM):**
+  - Correo 1 (Asunto: `Estructura de datos Taller 3 Grupo # 2026-2`) + `Taller_3_Grupo_#.zip`.
+  - Correo 2 (Asunto: `Estructura de datos Parcial 3 Grupo # 2026-2`) + `Parcial_3_Grupo_#.zip`.
 
 ---
 
-## 7. Decisiones Abiertas para Alinear con Kiro / Claude y el Equipo
+## 7. Estado de Decisiones del Proyecto
 
-1. **Iniciales y Datos del Grupo:** ¿Cuáles son los nombres completos, cédulas/códigos, iniciales exactas para nombrar los archivos (ej. `ABC-DEF-GHI.cpp` o `AP-KL-MR.cpp`) y el número de `Grupo #` del asunto del correo?
-2. **Plantilla Word del Profesor:** ¿Puedes descargar el archivo de la URL de SharePoint extraída del PDF y dejarlo en el proyecto para clonar su estructura exacta con `python-docx`?
-3. **Modularidad de Entrega (Un solo archivo vs Múltiples archivos + Bundler):** ¿Preferimos escribir cada programa directamente en **un único archivo modularizado por clases/secciones (~500 líneas)** (más directo de leer y depurar), o desarrollar en múltiples archivos `src/` y generar automáticamente el archivo único de entrega para el `.zip`? *(Recomendación: **archivo único limpio por capas de clases**, porque lo que explican en el video es exactamente el mismo archivo que recibe y compila el profesor).*
-4. **Cobertura del Punto 5 de Parcial 3:** ¿Confirmamos incluir `categoria` + `validado` en Rutas/Peajes + registro ligero de `Grupos/Investigadores Viales` para cubrir al 100% la redacción literal del PDF sin ensuciar la interfaz principal?
+### Resueltas
+1. **Integrantes e Iniciales Oficiales (`KM-DV-ST`):** Kovyn Been Mena Orcasita (`KM`), Damian Jose Velasquez Gonzalez (`DV`), Sofia Isabel Tovar Rodriguez (`ST`). Archivos: `Taller_3_KM-DV-ST.cpp/.py` y `Parcial_3_KM-DV-ST.cpp/.py`.
+2. **Plantilla Oficial Word:** `plantilla_formato.doc` descargada y analizada (IEEE Std 830-1998).
+3. **Arquitectura de Entrega:** 1 archivo `.cpp` y 1 archivo `.py` por proyecto en 4 capas internas desacopladas + commits pequeños por subfase + cero rastros de IA/plantillas.
+4. **Cobertura del Punto 5 de Parcial 3:** Blindaje híbrido (`categoria` + `validado` en tramos/peajes + submódulo ligero de grupos/investigadores viales).
+
+### Pendientes menores (no bloquean iniciar Fase 0B / Fase 1A)
+1. **Número de `Grupo #`**, cédulas/códigos y correos institucionales de Damian y Sofia (para `Identificacion_Estudiantes.txt` y los `.docx`).
+2. **Confirmación visual en Windows** de `tests_compatibilidad/prueba_win.exe` + instalación de `tk` / `.venv` en CachyOS si aún falta.
