@@ -427,16 +427,18 @@ class InterfazGraficaPAA:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("PAA - Programa de Aprendizaje de Arboles AVL (UPC | KM-DV-ST)")
-        self.root.geometry("1220x740")
-        self.root.minsize(980, 620)
+        self.root.geometry("1180x670")
+        self.root.minsize(960, 580)
         self.root.configure(bg="#F4F6F8")
 
         self.arbol = ArbolAVL()
         self.nodos_resaltados: Set[int] = set()
         self.botones_accion: List[tk.Button] = []
         self.demo_en_curso = False
+        self._respaldo_demo: List[Tuple[int, str, bool]] = []
 
         self._construir_ui()
+        self.root.protocol("WM_DELETE_WINDOW", self._accion_salir)
         self.root.after(150, self._preguntar_carga_inicial)
 
     def _construir_ui(self) -> None:
@@ -590,10 +592,10 @@ class InterfazGraficaPAA:
             relief=tk.FLAT,
             font=("Segoe UI", 9),
             cursor="hand2",
-            pady=5,
+            pady=4,
             command=self._mostrar_variables_modelo,
         )
-        btn_vars.pack(fill=tk.X, padx=15, pady=(0, 8))
+        btn_vars.pack(fill=tk.X, padx=15, pady=(0, 4))
         self.botones_accion.append(btn_vars)
 
         # Bitacora pedagogica de balanceo y comparaciones
@@ -603,11 +605,11 @@ class InterfazGraficaPAA:
             bg="#FFFFFF",
             fg="#1E293B",
             font=("Segoe UI", 10, "bold"),
-        ).pack(anchor="w", padx=12, pady=(2, 4))
+        ).pack(anchor="w", padx=12, pady=(2, 3))
 
         self.txt_traza = tk.Text(
             panel_izq,
-            height=11,
+            height=7,
             bg="#F8FAFC",
             fg="#0F172A",
             font=("Consolas", 9),
@@ -616,7 +618,23 @@ class InterfazGraficaPAA:
             relief=tk.SOLID,
             state=tk.DISABLED,
         )
-        self.txt_traza.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 10))
+        self.txt_traza.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 6))
+
+        btn_salir = tk.Button(
+            panel_izq,
+            text="Salir del Programa",
+            bg="#991B1B",
+            fg="#FFFFFF",
+            activebackground="#7F1D1D",
+            activeforeground="#FFFFFF",
+            relief=tk.FLAT,
+            font=("Segoe UI", 9, "bold"),
+            cursor="hand2",
+            pady=5,
+            command=self._accion_salir,
+        )
+        btn_salir.pack(fill=tk.X, padx=15, pady=(0, 8))
+        self.botones_accion.append(btn_salir)
 
         # Panel derecho: Estado actual + Lienzo grafico del arbol AVL
         panel_der = tk.Frame(cuerpo, bg="#FFFFFF", bd=1, relief=tk.SOLID)
@@ -798,9 +816,28 @@ class InterfazGraficaPAA:
         )
         messagebox.showinfo("Variables de Entrada y Salida - PAA", texto)
 
+    def _accion_salir(self) -> None:
+        if self.demo_en_curso:
+            return
+        resp = messagebox.askyesnocancel(
+            "Salir - PAA (AVL)",
+            "Desea guardar los cambios en 'datos_avl.txt' antes de salir?\n\n"
+            "- Si: Guardar y salir.\n"
+            "- No: Salir sin guardar.\n"
+            "- Cancelar: Volver al programa.",
+        )
+        if resp is None:
+            return
+        if resp:
+            PersistenciaAVL.guardar(self.arbol, self.ARCHIVO_DATOS)
+        self.root.destroy()
+
     def _iniciar_demo(self) -> None:
         if self.demo_en_curso:
             return
+        self._respaldo_demo = [
+            (n.clave, n.etiqueta, n.activo) for n in self.arbol.pre_orden()
+        ]
         self.demo_en_curso = True
         self._establecer_botones_habilitados(False)
         self.arbol.crear_vacio()
@@ -826,6 +863,23 @@ class InterfazGraficaPAA:
                 "Demo completado: se ejecutaron las 4 rotaciones AVL (RR -> LL -> LR -> RL)."
             )
             self._dibujar_arbol()
+            if self._respaldo_demo:
+                restaurar = messagebox.askyesno(
+                    "Demo Pedagogico Finalizado",
+                    f"Se ejecutaron las 4 rotaciones AVL (RR, LL, LR, RL).\n\n"
+                    f"Desea restaurar su arbol anterior ({len(self._respaldo_demo)} nodos)?\n"
+                    "- Si: Restaurar los nodos que tenia antes del Demo.\n"
+                    "- No: Conservar el arbol de 7 nodos del Demo.",
+                )
+                if restaurar:
+                    self.arbol.crear_vacio()
+                    for clave, etq, act in self._respaldo_demo:
+                        self.arbol.insertar(clave, etq, act)
+                    self.var_estado.set(
+                        f"Arbol anterior restaurado ({len(self._respaldo_demo)} nodos)."
+                    )
+                    self._refrescar_vista()
+                self._respaldo_demo.clear()
             return
 
         clave, etq = secuencia[indice]

@@ -9,17 +9,18 @@
 #ifdef _WIN32
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
+#else
+  #include <chrono>
+  #include <thread>
 #endif
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <queue>
 #include <sstream>
 #include <string>
-#include <thread>
 #include <vector>
 
 // ============================================================================
@@ -101,6 +102,14 @@ namespace Consola {
         std::string linea;
         std::getline(std::cin, linea);
         return limpiarTexto(linea);
+    }
+
+    void dormirMs(int milisegundos) {
+    #ifdef _WIN32
+        Sleep(static_cast<DWORD>(milisegundos));
+    #else
+        std::this_thread::sleep_for(std::chrono::milliseconds(milisegundos));
+    #endif
     }
 
     bool leerEntero(const std::string& mensaje, int& destino) {
@@ -687,6 +696,16 @@ private:
     }
 
     void ejecutarDemoPedagogico() {
+        struct CopiaNodo {
+            int clave;
+            std::string etiqueta;
+            bool activo;
+        };
+        std::vector<CopiaNodo> respaldo;
+        for (const NodoAVL* n : arbol.preOrden()) {
+            respaldo.push_back({n->clave, n->etiqueta, n->activo});
+        }
+
         const std::vector<std::pair<int, std::string>> secuencia = {
             {10, "Demo_10"},
             {20, "Demo_20"},
@@ -713,10 +732,27 @@ private:
             Consola::GotoXY(2, 26);
             std::cout << "Ejecutando secuencia pedagogica AVL (RR -> LL -> LR -> RL)...";
             std::cout << std::flush;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+            Consola::dormirMs(1500);
         }
-        estadoBanner = "Demo completado: 4 rotaciones AVL (RR, LL, LR, RL) ejecutadas.";
-        pausarEn(28);
+
+        if (!respaldo.empty()) {
+            Consola::GotoXY(2, 28);
+            std::string resp = Consola::leerLinea(
+                "Demo finalizado. Restaurar su arbol anterior (" +
+                std::to_string(respaldo.size()) + " nodos)? (s/n): ");
+            if (resp == "s" || resp == "S") {
+                arbol.crearVacio();
+                for (const auto& item : respaldo) {
+                    arbol.insertar(item.clave, item.etiqueta, item.activo);
+                }
+                estadoBanner = "Arbol anterior restaurado (" + std::to_string(respaldo.size()) + " nodos).";
+            } else {
+                estadoBanner = "Demo completado: se conservo el arbol de 7 nodos del Demo.";
+            }
+        } else {
+            estadoBanner = "Demo completado: 4 rotaciones AVL (RR, LL, LR, RL) ejecutadas.";
+            pausarEn(28);
+        }
     }
 
     void pausarEn(int fila) const {
