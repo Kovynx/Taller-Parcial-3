@@ -1,0 +1,101 @@
+# Persistencia Parcial 3 - Programa Estadistico de Rutas de Automoviles (PERA - Colombia)
+# Secciones: [CIUDADES], [RUTAS], [GRUPOS], [PRODUCTOS]
+
+[CIUDADES]
+# id;nombre;departamento;latitud;longitud;activa
+1;Bogota D.C.;Cundinamarca;4.7110;-74.0721;1
+2;Medellin;Antioquia;6.2442;-75.5812;1
+3;Cali;Valle del Cauca;3.4516;-76.5320;1
+4;Barranquilla;Atlantico;10.9685;-74.7813;1
+5;Cartagena;Bolivar;10.3910;-75.4794;1
+6;Cucuta;Norte de Santander;7.8939;-72.5078;1
+7;Bucaramanga;Santander;7.1193;-73.1227;1
+8;Pereira;Risaralda;4.8133;-75.6961;1
+9;Santa Marta;Magdalena;11.2408;-74.1990;1
+10;Ibague;Tolima;4.4389;-75.2322;1
+11;Pasto;Narino;1.2136;-77.2811;1
+12;Manizales;Caldas;5.0689;-75.5174;1
+13;Neiva;Huila;2.9273;-75.2819;1
+14;Villavicencio;Meta;4.1420;-73.6266;1
+15;Armenia;Quindio;4.5339;-75.6811;1
+16;Valledupar;Cesar;10.4631;-73.2532;1
+17;Monteria;Cordoba;8.7479;-75.8814;1
+18;Sincelejo;Sucre;9.3047;-75.3978;1
+19;Popayan;Cauca;2.4448;-76.6147;1
+20;Tunja;Boyaca;5.5353;-73.3678;1
+21;Riohacha;La Guajira;11.5444;-72.9072;1
+22;Florencia;Caqueta;1.6144;-75.6062;1
+23;Quibdo;Choco;5.6947;-76.6611;1
+24;Yopal;Casanare;5.3378;-72.3959;1
+25;Arauca;Arauca;7.0847;-70.7591;1
+26;Mocoa;Putumayo;1.1528;-76.6521;1
+27;San Jose del Guaviare;Guaviare;2.5729;-72.6459;1
+28;San Andres;San Andres y Providencia;12.5847;-81.7006;1
+29;Leticia;Amazonas;-4.2153;-69.9406;1
+30;Mitu;Vaupes;1.2578;-70.2336;1
+31;Inirida;Guainia;3.8653;-67.9239;1
+32;Puerto Carreno;Vichada;6.1890;-67.4859;1
+
+[RUTAS]
+# idRuta;idOrigen;idDestino;distanciaKm;tiempoHoras;costoCombustibleCOP;cantidadPeajes;costoPeajesCOP;categoriaVia;validado;activa
+1;1;20;139;2.5;62000;3;42500;Concesion 4G;1;1
+2;1;14;118;3.0;58000;3;51000;Concesion 4G;1;1
+3;1;10;205;4.0;95000;3;46800;Concesion 4G;1;1
+4;1;13;312;5.5;138000;4;59200;Primaria;1;1
+5;1;2;416;8.5;198000;6;98400;Concesion 4G;1;1
+6;1;12;292;6.8;145000;4;56000;Primaria;1;1
+7;20;7;280;5.8;132000;3;41200;Primaria;1;1
+8;20;24;208;4.5;98000;2;26400;Primaria;1;1
+9;7;6;196;4.8;96000;2;31000;Primaria;1;1
+10;7;16;456;7.8;195000;5;71500;Concesion 4G;1;1
+11;7;2;390;8.0;186000;5;76000;Primaria;1;1
+12;6;25;368;8.2;172000;2;24800;Secundaria;1;1
+13;24;25;355;6.2;148000;2;25600;Primaria;1;1
+14;24;14;255;4.5;108000;3;41400;Concesion 4G;1;1
+15;14;27;284;5.2;122000;2;26000;Primaria;1;1
+16;16;21;164;2.8;68000;2;26800;Primaria;1;1
+17;16;9;256;4.2;105000;3;43500;Concesion 4G;1;1
+18;16;18;328;5.5;134000;3;41000;Primaria;1;1
+19;21;9;170;2.9;70000;2;28400;Primaria;1;1
+20;9;4;104;1.8;42000;2;32600;Concesion 4G;1;1
+21;4;5;121;2.1;49000;2;34200;Concesion 4G;1;1
+22;4;18;244;4.0;98000;3;42800;Primaria;1;1
+23;5;18;187;3.2;76000;3;44100;Concesion 4G;1;1
+24;18;17;120;2.0;48000;2;27600;Primaria;1;1
+25;17;2;405;7.6;178000;5;74500;Concesion 4G;1;1
+26;2;12;197;4.6;96000;3;45900;Concesion 4G;1;1
+27;2;8;212;4.8;102000;4;61200;Concesion 4G;1;1
+28;2;23;232;6.0;116000;1;13200;Secundaria;1;1
+29;12;8;53;1.3;25000;1;16400;Concesion 4G;1;1
+30;8;15;48;1.1;22000;1;15800;Concesion 4G;1;1
+31;8;23;245;6.2;120000;1;12800;Secundaria;1;1
+32;8;3;210;3.4;88000;4;58600;Concesion 4G;1;1
+33;15;10;96;2.6;48000;2;31200;Concesion 4G;1;1
+34;15;3;182;3.0;76000;3;44500;Concesion 4G;1;1
+35;10;13;206;3.6;88000;3;43200;Primaria;1;1
+36;10;12;168;4.2;82000;2;27400;Primaria;1;1
+37;3;19;138;2.8;62000;2;28800;Primaria;1;1
+38;19;11;248;5.8;122000;2;29400;Primaria;1;1
+39;19;13;278;6.5;134000;1;14200;Secundaria;1;1
+40;19;26;274;6.8;136000;1;13800;Secundaria;1;1
+41;13;22;238;4.8;108000;2;27000;Primaria;1;1
+42;13;26;304;5.8;138000;2;27800;Primaria;1;1
+43;22;26;242;5.2;112000;1;13500;Secundaria;1;1
+44;11;26;146;4.2;74000;0;0;Secundaria;1;1
+45;16;6;342;6.4;152000;3;39800;Primaria;1;1
+46;7;1;398;8.2;188000;6;88200;Concesion 4G;1;1
+47;5;17;276;4.8;114000;4;56400;Primaria;1;1
+48;4;16;304;5.0;126000;4;57200;Primaria;1;1
+
+[GRUPOS]
+# idGrupo;nombreGrupo;region;investigadorLider;activo
+1;Observatorio Vial Caribe;Region Caribe;Ing. Carlos Mendoza;1
+2;Grupo Movilidad Andina;Region Andina;Ing. Laura Pineda;1
+3;Unidad Analisis Orinoquia-Sur;Orinoquia y Sur;Ing. Andres Rojas;1
+
+[PRODUCTOS]
+# idProducto;idGrupo;nombreProducto;categoria;validado;activo
+1;1;Matriz Tarifaria Peajes Ruta del Sol;Informe Tecnico INVIAS;1;1
+2;1;Estudio Flujo Vehicular Cesar-Magdalena;Dataset Estadistico;1;1
+3;2;Modelo Consumo Combustible Montana;Modelo Analitico;1;1
+4;3;Evaluacion Conectividad Terrestre Sur;Diagnostico Vial;1;1

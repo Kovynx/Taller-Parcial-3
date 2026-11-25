@@ -1,0 +1,12 @@
+# Persistencia Taller 3 - Programa de Aprendizaje de Arboles (AVL)
+# Formato: clave;etiqueta;activo (1=Activo, 0=Desactivado)
+50;Estructura_Datos;1
+30;Arbol_Binario;1
+70;Balanceo_AVL;1
+20;Rotacion_LL;1
+40;Rotacion_LR;1
+60;Rotacion_RL;1
+80;Rotacion_RR;1
+10;Pre_Orden;1
+35;In_Orden;0
+90;Post_Orden;1
