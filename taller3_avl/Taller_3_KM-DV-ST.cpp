@@ -679,9 +679,44 @@ private:
         Consola::GotoXY(2, 25);
         std::cout << "1) Insertar nodo      2) Eliminar nodo      3) Desactivar/Reactivar   4) Consultar (Buscar)   5) Modificar nodo";
         Consola::GotoXY(2, 26);
-        std::cout << "6) Crear vacio        7) Cargar archivo     8) Guardar archivo        9) Detalle y Vars E/S   0) Salir";
+        std::cout << "6) Crear vacio        7) Cargar archivo     8) Guardar archivo        9) Detalle y Vars E/S   D) Demo 4 Rotaciones";
+        Consola::GotoXY(2, 27);
+        std::cout << "0) Salir";
         Consola::GotoXY(2, 28);
         std::cout << "Seleccione una opcion: ";
+    }
+
+    void ejecutarDemoPedagogico() {
+        const std::vector<std::pair<int, std::string>> secuencia = {
+            {10, "Demo_10"},
+            {20, "Demo_20"},
+            {30, "Demo_30_RR"},
+            {5,  "Demo_5"},
+            {3,  "Demo_3_LL"},
+            {8,  "Demo_8_LR"},
+            {25, "Demo_25_RL"}
+        };
+
+        arbol.crearVacio();
+        for (std::size_t i = 0; i < secuencia.size(); ++i) {
+            int clave = secuencia[i].first;
+            arbol.insertar(clave, secuencia[i].second, true);
+            const RegistroTraza& traza = arbol.obtenerUltimaTraza();
+            std::string rotInfo = traza.rotaciones.empty()
+                ? "Sin rotacion"
+                : traza.rotaciones.back().detalle;
+
+            std::string aviso = "[DEMO] Paso " + std::to_string(i + 1) + "/" +
+                                std::to_string(secuencia.size()) +
+                                ": Insertando " + std::to_string(clave) + " -> " + rotInfo;
+            dibujarPantallaPrincipal(aviso);
+            Consola::GotoXY(2, 26);
+            std::cout << "Ejecutando secuencia pedagogica AVL (RR -> LL -> LR -> RL)...";
+            std::cout << std::flush;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+        }
+        estadoBanner = "Demo completado: 4 rotaciones AVL (RR, LL, LR, RL) ejecutadas.";
+        pausarEn(28);
     }
 
     void pausarEn(int fila) const {
@@ -838,6 +873,8 @@ public:
                 }
             } else if (opcion == "9") {
                 mostrarDetalleYVariables();
+            } else if (opcion == "d" || opcion == "D") {
+                ejecutarDemoPedagogico();
             } else if (opcion == "0") {
                 Consola::GotoXY(2, 30);
                 std::string resp = Consola::leerLinea("Desea guardar los cambios antes de salir? (s/n): ");
@@ -846,7 +883,7 @@ public:
                 }
                 ejecutando = false;
             } else {
-                estadoBanner = "Opcion no reconocida. Seleccione entre 0 y 9.";
+                estadoBanner = "Opcion no reconocida. Seleccione 0-9 o D.";
             }
         }
 

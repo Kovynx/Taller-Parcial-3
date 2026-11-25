@@ -1,8 +1,9 @@
 ---
 tipo: nodo
 proyecto: Taller 3 (PAA - Árboles AVL)
-estado: pendiente
-archivos: []
+estado: completado
+archivos:
+  - taller3_avl/Taller_3_KM-DV-ST.cpp
 dependencias:
   - "[[Taller-3-PAA-AVL]]"
   - "[[Nodo-Persistencia-AVL]]"
@@ -12,14 +13,18 @@ ultima_actualizacion: 2026-11-25
 # Nodo — AVL en C/C++
 
 ## Propósito
-Implementación en C/C++ del Programa de Aprendizaje de Árboles (PAA) para enseñar árboles binarios AVL de forma visual (incluyendo `GotoXY()` en consola), con recorridos siempre visibles.
+Implementación en C++17 del Programa de Aprendizaje de Árboles (PAA) para enseñar árboles binarios AVL de forma visual (incluyendo `GotoXY()` en consola `120x34`), con recorridos Pre-orden, In-orden y Post-orden siempre visibles y Demo de las 4 rotaciones (`RR, LL, LR, RL`).
 
-## Archivos Exactos (Actualizar al crear)
-- `tests_compatibilidad/prueba_win_linux.cpp` — Base validada de `Consola::GotoXY()`, `Consola::limpiarPantalla()`, `rutaJuntoAlEjecutable()` y lectura `CRLF`-safe (compilada limpio en `g++` Linux y `x86_64-w64-mingw32-g++ -static` Windows PE32+ `1.1 MB` sin DLLs externas).
-- `taller3_avl/Taller_3_KM-DV-ST.cpp` — Implementación principal C++17 (pendiente de creación).
+## Archivos Exactos
+- `taller3_avl/Taller_3_KM-DV-ST.cpp` — Implementación autocontenida en 4 capas (compilada con 0 warnings en `g++` Linux y `x86_64-w64-mingw32-g++ -static` Windows PE32+ sin DLLs MinGW).
+- `tests_compatibilidad/prueba_win_linux.cpp` — Prototipo base de validación de consola.
 
 ## Símbolos / Estructuras Clave
-- *(Pendiente de definición en etapa de desarrollo)*
+- `Consola::GotoXY(int x, int y)`, `Consola::inicializar()`, `Consola::limpiarPantalla()`, `Consola::rutaJuntoAlEjecutable()`
+- `NodoAVL`, `EventoBalanceo`, `RegistroTraza`
+- `ArbolAVL`: `insertar`, `eliminar`, `buscar`, `cambiarEstadoActivo`, `modificar`, `crearVacio`, `preOrden`, `inOrden`, `postOrden`
+- `PersistenciaAVL`: `cargarArchivo`, `guardarArchivo`
+- `InterfazPAA`: `dibujarPantallaPrincipal`, `ejecutarDemoPedagogico`, `mostrarDetalleYVariables`
 
 ## Entradas y Salidas
 - **Entradas:** Opción de carga inicial (con/sin archivo), claves/datos del nodo a insertar, eliminar, desactivar, buscar o modificar.
