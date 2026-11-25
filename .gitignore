@@ -1,0 +1,26 @@
+# Entornos virtuales y Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Binarios compilados (evitar mezclar ELF Linux o .exe temporales en el repo)
+build/
+dist/
+*.o
+*.obj
+*.out
+*.exe
+*_linux
+tests_compatibilidad/prueba_linux
+tests_compatibilidad/prueba_win.exe
+
+# Archivos temporales de Office / Word / SO
+~$*.doc
+~$*.docx
+.DS_Store
+Thumbs.db
+
+# Paquetes finales generados (se regeneran con scripts/empaquetar_entregas.py)
+*.zip
