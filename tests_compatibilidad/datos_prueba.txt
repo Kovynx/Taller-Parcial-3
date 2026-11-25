@@ -1,0 +1,3 @@
+20;Raiz_AVL;1
+10;Subarbol_Izq;1
+30;Subarbol_Der;0
