@@ -1353,7 +1353,8 @@ private:
         int intentos = 3;
         while (intentos > 0) {
             mostrarEncabezado("CONTROL DE ACCESO - SISTEMA PERA (Intentos restantes: " + std::to_string(intentos) + ")");
-            std::cout << "  Ingrese credenciales de acceso (no se permiten campos vacios ni espacios).\n\n";
+            std::cout << "  Credenciales predeterminadas: (Usuario: admin | Contrasena: pera2026)\n";
+            std::cout << "  No se permiten campos vacios ni espacios en blanco.\n\n";
             std::string usr, pwd;
             std::cout << "  Usuario    : ";
             std::getline(std::cin, usr);

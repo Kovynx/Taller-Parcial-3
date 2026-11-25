@@ -624,7 +624,7 @@ class VentanaAccesoPERA:
 
         self.win = tk.Toplevel(root)
         self.win.title("Acceso al Sistema PERA - Colombia")
-        self.win.geometry("420x300")
+        self.win.geometry("430x340")
         self.win.resizable(False, False)
         self.win.configure(bg="#F8FAFC")
         self.win.protocol("WM_DELETE_WINDOW", self._cancelar)
@@ -640,20 +640,41 @@ class VentanaAccesoPERA:
             font=("Segoe UI", 11, "bold"),
         ).pack(expand=True)
 
-        cuerpo = tk.Frame(self.win, bg="#F8FAFC", padx=28, pady=16)
+        cuerpo = tk.Frame(self.win, bg="#F8FAFC", padx=28, pady=12)
         cuerpo.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(
+            cuerpo,
+            text=f"(Usuario: {USUARIO_PREDEF}  |  Contrasena: {CLAVE_PREDEF})",
+            bg="#E2E8F0",
+            fg="#0F4C81",
+            font=("Segoe UI", 8, "bold"),
+            pady=4,
+        ).pack(fill=tk.X, pady=(0, 8))
 
         self.var_usuario = tk.StringVar()
         self.var_clave = tk.StringVar()
-        self.var_aviso = tk.StringVar(value="Ingrese sus credenciales (sin espacios en blanco).")
+        self.var_mostrar = tk.BooleanVar(value=False)
+        self.var_aviso = tk.StringVar(value="Ingrese credenciales sin espacios en blanco.")
 
         tk.Label(cuerpo, text="Usuario:", bg="#F8FAFC", fg="#1E293B", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         self.ent_usuario = ttk.Entry(cuerpo, textvariable=self.var_usuario)
-        self.ent_usuario.pack(fill=tk.X, pady=(2, 8))
+        self.ent_usuario.pack(fill=tk.X, pady=(2, 6))
 
         tk.Label(cuerpo, text="Contrasena:", bg="#F8FAFC", fg="#1E293B", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         self.ent_clave = ttk.Entry(cuerpo, textvariable=self.var_clave, show="*")
-        self.ent_clave.pack(fill=tk.X, pady=(2, 8))
+        self.ent_clave.pack(fill=tk.X, pady=(2, 4))
+
+        tk.Checkbutton(
+            cuerpo,
+            text="Mostrar contrasena",
+            variable=self.var_mostrar,
+            bg="#F8FAFC",
+            fg="#334155",
+            activebackground="#F8FAFC",
+            font=("Segoe UI", 8),
+            command=self._toggle_ver_clave,
+        ).pack(anchor="w", pady=(0, 6))
 
         tk.Label(
             cuerpo,
@@ -700,6 +721,9 @@ class VentanaAccesoPERA:
         self.win.bind("<Return>", lambda _e: self._validar())
         self.ent_usuario.focus_set()
         self.win.grab_set()
+
+    def _toggle_ver_clave(self) -> None:
+        self.ent_clave.configure(show="" if self.var_mostrar.get() else "*")
 
     def _validar(self) -> None:
         usuario_raw = self.var_usuario.get()

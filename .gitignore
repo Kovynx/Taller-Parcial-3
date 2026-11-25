@@ -24,3 +24,4 @@ Thumbs.db
 
 # Paquetes finales generados (se regeneran con scripts/empaquetar_entregas.py)
 *.zip
+parcial3_pera/mapa_pera_colombia.html
