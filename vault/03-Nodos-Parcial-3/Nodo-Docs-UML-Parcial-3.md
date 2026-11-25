@@ -1,7 +1,7 @@
 ---
 tipo: nodo
 proyecto: Parcial 3 (PERA - Grafos Colombia)
-estado: completado
+estado: completado-pendiente-video
 archivos:
   - parcial3_pera/docs/uml_casos_uso_parcial3.png
   - parcial3_pera/docs/uml_secuencia_parcial3.png
@@ -19,9 +19,12 @@ ultima_actualizacion: 2026-11-25
 ## Propósito
 Centralizar el documento técnico Word (`.docx`), la plantilla de requerimientos, los diagramas UML (Casos de Uso, Secuencia, Estado), el archivo de identificación de estudiantes y los insumos del video de 10 minutos.
 
-## Archivos Exactos (Actualizar al crear)
-- `plantilla_formato.doc` — Plantilla oficial **IEEE Std 830-1998 (SRS)** en formato binario Word 97-2003 (`.doc`).
-- *(Pendiente al generar: `parcial3_pera/Especificacion_Tecnica_Parcial_3.docx`, imágenes PNG de UML y `parcial3_pera/Identificacion_Estudiantes.txt`)*
+## Archivos Exactos
+- `plantilla_formato.doc` — Plantilla oficial **IEEE Std 830-1998 (SRS)** de referencia.
+- `parcial3_pera/Especificacion_Tecnica_Parcial_3.docx` — Informe IEEE 830 completo (`649 KB`) con los 3 diagramas UML embebidos y 0 rastros de IA/plantillas.
+- `parcial3_pera/docs/uml_casos_uso_parcial3.png`, `uml_secuencia_parcial3.png`, `uml_estados_parcial3.png` — Diagramas UML a 220 DPI verificados visualmente.
+- `parcial3_pera/Identificacion_Estudiantes.txt`, `parcial3_pera/README.txt`, `parcial3_pera/requirements.txt`.
+- `scripts/generar_docs_parcial3.py` — Script generador interno (excluido del `.zip`).
 
 ## Estructura Exacta Exigida por `plantilla_formato.doc` (IEEE 830)
 > **Nota técnica:** Convertir `plantilla_formato.doc` -> `.docx` o autogenerar con `python-docx` conservando la jerarquía IEEE 830-1998 exacta, tablas de ficha `RF-XX` y eliminando todas las notas guía en color azul y `MACROBUTTON NoMacro [...]`.
@@ -40,9 +43,9 @@ Centralizar el documento técnico Word (`.docx`), la plantilla de requerimientos
    - `4.4 Diagrama de Estado (UML)` (Estados de tramos viales Activo/Desactivado/Validado y flujo del motor PERA)
 
 ## Checklist de Contenido Obligatorio
-- [ ] Diseño de la estructura de datos basada en grafos y estrategia de solución
-- [ ] Diagrama de Casos de Uso (UML)
-- [ ] Diagrama de Secuencia (UML)
-- [ ] Diagrama de Estado (UML)
-- [ ] Archivo texto con identificación de los 3 estudiantes
+- [x] Diseño de la estructura de datos basada en grafos y estrategia de solución
+- [x] Diagrama de Casos de Uso (UML)
+- [x] Diagrama de Secuencia (UML)
+- [x] Diagrama de Estado (UML)
+- [x] Archivo texto con identificación de los 3 estudiantes (`GRUPO: 05`, falta solo pegar URL YouTube)
 - [ ] Video ~10 min en YouTube (identidad UPC, estudiantes visibles todo el tiempo)

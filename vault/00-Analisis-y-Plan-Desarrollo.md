@@ -166,13 +166,13 @@ Taller-Parcial 3/
 ├── vault/                             # Bóveda Obsidian (NO entra en los .zip)
 ├── .agents/skills/                    # Skills de contexto (NO entra en los .zip)
 ├── tests_compatibilidad/              # Pruebas de humo Win/Linux (NO entra en los .zip)
-├── taller3_avl/                       # Trabajo del Taller 3 -> Taller_3_Grupo_#.zip
+├── taller3_avl/                       # Trabajo del Taller 3 -> Taller_3_Grupo_05.zip
 │   ├── Taller_3_KM-DV-ST.cpp          # C++17 AVL visual con GotoXY() (120x34 seguro)
 │   ├── Taller_3_KM-DV-ST.py           # Python tkinter AVL visual interactivo
 │   ├── datos_avl.txt                  # Persistencia compartida (; CRLF-safe)
 │   ├── Identificacion_Estudiantes.txt
 │   └── docs/                          # Especificacion_Tecnica_Taller_3.docx + 3 UML PNG
-├── parcial3_pera/                     # Trabajo del Parcial 3 -> Parcial_3_Grupo_#.zip
+├── parcial3_pera/                     # Trabajo del Parcial 3 -> Parcial_3_Grupo_05.zip
 │   ├── Parcial_3_KM-DV-ST.cpp         # C++17 3 Grafos Colombia + Dijkstra + Resumen
 │   ├── Parcial_3_KM-DV-ST.py          # Python 3 Grafos + Dashboard Matplotlib + Bono Folium
 │   ├── datos_pera.txt                 # Persistencia real Colombia (32 capitales + peajes)
@@ -286,19 +286,19 @@ Antes de empaquetar cada `.zip`, el script ejecuta las validaciones en orden y *
   - Registrar enlaces finales de YouTube en `Identificacion_Estudiantes.txt` de cada entrega.
   - *Commit:* `docs(entrega): registrar enlaces de videos YouTube y verificar paquetes zip`
 - **6B — Envío por Correo a `adithperez@unicesar.edu.co` (antes del Mar 1 Dic 11:59 AM):**
-  - Correo 1 (Asunto: `Estructura de datos Taller 3 Grupo # 2026-2`) + `Taller_3_Grupo_#.zip`.
-  - Correo 2 (Asunto: `Estructura de datos Parcial 3 Grupo # 2026-2`) + `Parcial_3_Grupo_#.zip`.
+  - Correo 1 (Asunto: `Estructura de datos Taller 3 Grupo 05 2026-2`) + `Taller_3_Grupo_05.zip`.
+  - Correo 2 (Asunto: `Estructura de datos Parcial 3 Grupo 05 2026-2`) + `Parcial_3_Grupo_05.zip`.
 
 ---
 
 ## 7. Estado de Decisiones del Proyecto
 
 ### Resueltas
-1. **Integrantes e Iniciales Oficiales (`KM-DV-ST`):** Kovyn Been Mena Orcasita (`KM`), Damian Jose Velasquez Gonzalez (`DV`), Sofia Isabel Tovar Rodriguez (`ST`). Archivos: `Taller_3_KM-DV-ST.cpp/.py` y `Parcial_3_KM-DV-ST.cpp/.py`.
+1. **Integrantes, Curso e Iniciales Oficiales (`KM-DV-ST` | `Grupo 05`):** Kovyn Been Mena Orcasita (`KM`), Damian Jose Velasquez Gonzalez (`DV`), Sofia Isabel Tovar Rodriguez (`ST`). Archivos: `Taller_3_KM-DV-ST.cpp/.py` y `Parcial_3_KM-DV-ST.cpp/.py`.
 2. **Plantilla Oficial Word:** `plantilla_formato.doc` descargada y analizada (IEEE Std 830-1998).
-3. **Arquitectura de Entrega:** 1 archivo `.cpp` y 1 archivo `.py` por proyecto en 4 capas internas desacopladas + commits pequeños por subfase + cero rastros de IA/plantillas.
-4. **Cobertura del Punto 5 de Parcial 3:** Blindaje híbrido (`categoria` + `validado` en tramos/peajes + submódulo ligero de grupos/investigadores viales).
+3. **Arquitectura de Entrega:** 1 archivo `.cpp` y 1 archivo `.py` por proyecto en 4 capas internas desacopladas + `README.txt` + commits pequeños por subfase + cero rastros de IA/plantillas.
+4. **Cobertura del Punto 5 de Parcial 3 y Acceso:** Blindaje híbrido (`categoria` + `validado` en tramos/peajes + submódulo de grupos/investigadores/productos) y pantalla previa de acceso (`admin` / `pera2026`, visible en pantalla y en `README.txt`).
 
-### Pendientes menores (no bloquean iniciar Fase 0B / Fase 1A)
-1. **Número de `Grupo #`**, cédulas/códigos y correos institucionales de Damian y Sofia (para `Identificacion_Estudiantes.txt` y los `.docx`).
-2. **Confirmación visual en Windows** de `tests_compatibilidad/prueba_win.exe` + instalación de `tk` / `.venv` en CachyOS si aún falta.
+### Pendientes para cierre final
+1. **QA visual del Parcial 3 en Windows 10** (Taller 3 ya aprobado con capturas reales).
+2. **Grabación de los 2 videos (~10 min c/u)** y pegado de los enlaces YouTube en ambos `Identificacion_Estudiantes.txt`.

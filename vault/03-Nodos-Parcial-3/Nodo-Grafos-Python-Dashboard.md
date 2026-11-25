@@ -23,7 +23,8 @@ Implementación en Python 3 (`tkinter` + `matplotlib` + `folium`) del Programa E
 - `Ciudad`, `RutaTramo`, `GrupoInvestigacion`, `ProductoTecnico`, `ResultadoRuta`, `ResumenEstadisticoPERA`
 - `GrafoPonderado`, `SistemaPERA` (`reconstruir_grafos`, `calcular_ruta_optima`, `calcular_estadisticas`, CRUD completo)
 - `PersistenciaPERA` (`cargar`, `guardar`)
-- `InterfazGraficaPERA` (`construir_figura_dashboard`, `generar_mapa_folium`, `_accion_comparar_grafos`, `_accion_salir`)
+- `VentanaAccesoPERA`: control de acceso previo modal con credenciales visibles en pantalla y en `README.txt` (`admin` / `pera2026`), casilla `Mostrar contrasena` y bloqueo estricto ante vacíos o espacios.
+- `InterfazGraficaPERA` (`construir_figura_dashboard`, `generar_mapa_folium` con Esri sin 403, `_accion_comparar_grafos`, `_accion_salir`)
 
 ## Conexiones con Otros Nodos
 - Depende de: [[Parcial-3-PERA-Grafos]], [[Nodo-Datos-Colombia-Peajes]], [[Nodo-Persistencia-Grafos]]

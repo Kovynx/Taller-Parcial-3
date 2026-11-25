@@ -25,7 +25,7 @@ Implementación en C++11/17 del Programa Estadístico de Rutas de Automóviles (
 - `GrafoPonderado`: `agregarVertice`, `agregarAristaNoDirigida`, `grado`
 - `SistemaPERA`: `reconstruirGrafos`, `calcularRutaOptima` (Dijkstra 4 criterios), `calcularEstadisticas`, CRUD completo para ciudades/rutas/grupos/productos
 - `PersistenciaPERA`: `cargarArchivo`, `guardarArchivo`
-- `InterfazPERA`: `menuCalcularRuta`, `menuGestionCiudades`, `menuGestionRutas`, `menuEntidadesInvestigacion`, `mostrarResumenEstadistico`, `inspeccionarTresGrafos`
+- `InterfazPERA`: `autenticarUsuario` (control de acceso con credenciales visibles en pantalla y en `README.txt`: `admin` / `pera2026`, bloquea vacíos y espacios), `menuCalcularRuta`, `menuGestionCiudades`, `menuGestionRutas`, `menuEntidadesInvestigacion`, `mostrarResumenEstadistico`, `inspeccionarTresGrafos`
 
 ## Conexiones con Otros Nodos
 - Depende de: [[Parcial-3-PERA-Grafos]], [[Nodo-Datos-Colombia-Peajes]], [[Nodo-Persistencia-Grafos]]

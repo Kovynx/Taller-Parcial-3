@@ -43,9 +43,9 @@ Incluir una opción `D) Demo pedagógico` en el menú principal que ejecuta auto
 7. Insertar `25` → entra a la izquierda de `30`; desbalance en `20` (`FE = -2`, hijo `30` con `FE = +1`) → **Rotación Doble Derecha-Izquierda [RL]**; subárbol derecho pasa a `25(20, 30)`. Árbol final perfecto: `10(5(3, 8), 25(20, 30))` con `FE = 0` en todos los nodos.
 
 **Implementación en C++:**
-- Usar `std::this_thread::sleep_for(std::chrono::milliseconds(1500))` (cabecera `<chrono>` + `<thread>`, disponibles en C++17/STL, sin dependencias externas).
-- Antes de cada paso, limpiar la zona del árbol (re-dibujar con `GotoXY`) y mostrar en la **Zona Inferior** el texto: `[DEMO] Paso N/7: Insertando XX -> <nombre rotación o "Sin rotación">`.
-- Al terminar la secuencia, pausar con `Presiona ENTER para continuar...` y volver al menú.
+- Usar `Consola::dormirMs(1500)` (`Sleep(1500)` nativo de `<windows.h>` en `_WIN32` para compatibilidad con Dev-C++ C++11/17 sin `<thread>`, y `std::this_thread::sleep_for` en `#else` Linux).
+- Antes de iniciar, guardar respaldo de los nodos actuales y al finalizar preguntar si se desea restaurar el árbol previo o conservar el árbol del Demo.
+- En cada paso, redibujar con `GotoXY` y mostrar en la **Zona Inferior**: `[DEMO] Paso N/7: Insertando XX -> <nombre rotación o "Sin rotación">`.
 
 **Valor en el video:** cubre las **4 rotaciones reales (`RR`, `LL`, `LR`, `RL`)** en ~60 segundos de forma 100% matemática, guionizada y reproducible.
 
